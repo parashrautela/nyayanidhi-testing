@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Model your business</title>
+
+<!-- DM Mono is the real face used for the graph labels. The site's own
+     terraneSans / terraneSerif are proprietary, so Inter and Newsreader
+     stand in for them; swap the stacks below if you license the originals. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500&family=Newsreader:opsz,wght@6..72,200;6..72,300;6..72,400&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================
+   1. TOKENS
+   ============================================================ */
+:root {
+  --ds-bg: #f5f5ef;
+  --ds-ink: #000;
+  --ds-ink-cool: #2e303a;
+  --ds-ink-faint: #6b6a66;
+  --ds-ink-soft: #4e4e4e;
+  --ds-ink-inverse: #f5f5ef;
+  --ds-ink-inverse-soft: #888783;
+  --ds-inverse: #1a1817;
+  --ds-chrome: #1a1817;
+  --ds-surface-alt: #fff;
+  --ds-rule-strong: #00000040;
+  --ds-focus: #1a1817;
+
+  --ds-font-body: "Inter", ui-sans-serif, -apple-system, "Helvetica Neue", sans-serif;
+  --ds-font-display: "Newsreader", ui-serif, Georgia, "Times New Roman", serif;
+  --ds-font-mono: "DM Mono", ui-monospace, monospace;
+
+  --ds-radius-lg: 100px;
+  --ds-rail: 867px;
+  --ds-gutter: clamp(16px, calc(3vw + 1.6px), 40px);
+  --ds-space-1: 8px;
+  --ds-space-2: 16px;
+  --ds-space-4: 32px;
+  --ds-space-6: clamp(48px, calc(4vw + 28.8px), 80px);
+
+  --ds-text-display: clamp(48px, calc(4vw + 28.8px), 80px);
+  --ds-text-body: clamp(15px, calc(.125vw + 14.4px), 16px);
+  --ds-text-body-sm: 15px;
+  --ds-text-micro: 12px;
+  --ds-leading-body: 1.5;
+  --ds-leading-tight: .95;
+  --ds-track-body: .01em;
+  --ds-track-display: -.03em;
+
+  --ds-dur-fast: .35s;
+  --ds-dur-slow: .76s;
+  --ds-dur-exit: .24s;
+  --ds-ease: ease;
+}
+
+/* ============================================================
+   2. RESET / BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ds-bg);
+  color: var(--ds-ink);
+  font-family: var(--ds-font-body);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ============================================================
+   3. SECTION — head
+   ============================================================ */
+.model { background: var(--ds-bg); padding-bottom: var(--ds-space-6); }
+.model__head {
+  padding: var(--ds-space-6) var(--ds-gutter) 0;
+  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  display: flex;
+}
+.model__title {
+  max-width: var(--ds-rail);
+  font-family: var(--ds-font-display);
+  font-weight: 300;
+  font-size: var(--ds-text-display);
+  line-height: var(--ds-leading-tight);
+  letter-spacing: var(--ds-track-display);
+  color: var(--ds-ink);
+  text-wrap: balance;
+  margin: 0;
+}
+.model__lede {
+  width: 741px;
+  max-width: 100%;
+  font-weight: 400;
+  font-size: var(--ds-text-body);
+  line-height: var(--ds-leading-body);
+  letter-spacing: var(--ds-track-body);
+  color: var(--ds-ink-soft);
+  margin: 0;
+}
+.model__world { padding: 0 var(--ds-gutter); }
+
+/* ============================================================
+   4. TABS
+   ============================================================ */
+.tabs { max-width: 1120px; margin: 64px auto 0; display: flow-root; position: relative; }
+.tabs__strip {
+  gap: var(--ds-space-1);
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  margin: -4px 0;
+  padding: 4px 0;
+  display: flex;
+  position: relative;
+  overflow-x: auto;
+}
+.tabs__strip::-webkit-scrollbar { display: none; }
+.tab {
+  border: 1px solid var(--ds-chrome);
+  border-radius: var(--ds-radius-lg);
+  height: 40px;
+  color: var(--ds-chrome);
+  font-family: var(--ds-font-body);
+  font-weight: 300;
+  font-size: var(--ds-text-body);
+  letter-spacing: var(--ds-track-body);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--ds-dur-fast) var(--ds-ease), color var(--ds-dur-fast) var(--ds-ease);
+  background: 0 0;
+  flex: none;
+  align-items: center;
+  padding: 0 24px;
+  line-height: 1;
+  display: inline-flex;
+}
+.tab:hover { background: var(--ds-surface-alt); }
+.tab[aria-selected="true"] {
+  background: var(--ds-inverse);
+  border-color: var(--ds-inverse);
+  color: var(--ds-ink-inverse);
+}
+.tabs__strip[aria-busy="true"] .tab { cursor: progress; }
+.tabs__fade {
+  background: linear-gradient(to left, var(--ds-bg), transparent);
+  pointer-events: none;
+  width: 178px;
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+}
+.tabs__fade--start { left: 0; right: auto; transform: scaleX(-1); }
+.tabs__arrow {
+  background: var(--ds-inverse);
+  width: 32px; height: 32px;
+  color: var(--ds-ink-inverse);
+  cursor: pointer;
+  border: 0;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  display: flex;
+  position: absolute;
+  top: 4px; right: 0;
+}
+.tabs__arrow svg { width: 32px; height: 32px; display: block; }
+.tabs__arrow--start { left: 0; right: auto; transform: rotate(180deg); }
+.tabs__fade, .tabs__arrow {
+  transition: opacity var(--ds-dur-fast) var(--ds-ease), visibility var(--ds-dur-fast) var(--ds-ease);
+}
+.tabs[data-more="false"] .tabs__fade--end,
+.tabs[data-more="false"] .tabs__arrow--end,
+.tabs[data-back="false"] .tabs__fade--start,
+.tabs[data-back="false"] .tabs__arrow--start { opacity: 0; visibility: hidden; }
+
+/* ============================================================
+   5. WORLD — the three panels
+   ============================================================ */
+.world {
+  max-width: 1120px;
+  margin: var(--ds-space-4) auto 0;
+  gap: var(--ds-space-2);
+  grid-template-rows: 396px 268px;
+  grid-template-columns: 268px minmax(0, 1fr);
+  display: grid;
+}
+.world__index, .world__readout, .world__card {
+  border: 1px solid var(--ds-rule-strong);
+  background: var(--ds-surface-alt);
+  border-radius: 24px;
+  min-width: 0; min-height: 0;
+  overflow: hidden;
+}
+.world__index { grid-area: 1/1; }
+.world__readout { grid-area: 2/1; }
+.world__card { flex-direction: column; grid-area: 1/2/3; display: flex; position: relative; }
+.world__scroll {
+  overscroll-behavior: contain;
+  height: 100%;
+  margin-right: 8px;
+  padding: 15px;
+  overflow-y: auto;
+}
+.world__scroll::-webkit-scrollbar { width: 4px; }
+.world__scroll::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--ds-ink) 10%, transparent);
+  border-radius: 24px;
+  margin: 24px 0;
+}
+.world__scroll::-webkit-scrollbar-thumb { background: var(--ds-chrome); border-radius: 24px; }
+@supports not selector(::-webkit-scrollbar) {
+  .world__scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ds-chrome) color-mix(in srgb, var(--ds-ink) 10%, transparent);
+  }
+}
+.world__stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+.world__stage:focus-visible { outline-offset: -3px; }
+.world__host {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ds-dur-slow) var(--ds-ease);
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: radial-gradient(farthest-side, #000 58%, #0000008c 84%, #0000 100%);
+  mask-image: radial-gradient(farthest-side, #000 58%, #0000008c 84%, #0000 100%);
+}
+.world__host[data-ready="true"] { opacity: 1; pointer-events: auto; }
+.world__host[data-ready="leaving"] {
+  opacity: 0;
+  transition-duration: var(--ds-dur-exit);
+  pointer-events: none;
+}
+.world .corpus__stage { position: absolute; inset: 0; }
+.world .corpus__canvas {
+  cursor: grab;
+  touch-action: pan-y;
+  width: 100%; height: 100%;
+  display: block;
+}
+.world .corpus__canvas.pointing { cursor: pointer; }
+.world .corpus__canvas.grabbing { cursor: grabbing; }
+
+/* ============================================================
+   6. WORLD — controls
+   ============================================================ */
+.world__btn {
+  border: 1px solid var(--ds-chrome);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-surface-alt);
+  height: 38px;
+  color: var(--ds-chrome);
+  font-family: var(--ds-font-body);
+  font-weight: 300;
+  font-size: var(--ds-text-body);
+  letter-spacing: var(--ds-track-body);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--ds-dur-fast) var(--ds-ease), color var(--ds-dur-fast) var(--ds-ease);
+  justify-content: center;
+  align-items: center;
+  padding: 0 24px;
+  line-height: 1;
+  display: inline-flex;
+}
+.world__btn:hover { background: var(--ds-bg); }
+.world__reset { z-index: 2; position: absolute; top: 7px; left: 7px; }
+.world__zoom {
+  z-index: 2;
+  border: 1px solid var(--ds-chrome);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-surface-alt);
+  align-items: center;
+  gap: 12px;
+  padding: 2px;
+  display: inline-flex;
+  position: absolute;
+  top: 7px; right: 7px;
+}
+.world__zoom-btn {
+  background: var(--ds-inverse);
+  width: 32px; height: 32px;
+  color: var(--ds-ink-inverse);
+  cursor: pointer;
+  transition: opacity var(--ds-dur-fast) var(--ds-ease);
+  border: 0;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  display: flex;
+}
+.world__zoom-btn svg { width: 24px; height: 24px; display: block; }
+.world__zoom-btn:disabled { opacity: .4; cursor: default; }
+.world__zoom-pct {
+  text-align: center;
+  min-width: 3ch;
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-micro);
+  letter-spacing: .6px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-chrome);
+  line-height: 1;
+}
+.world__legend {
+  z-index: 2;
+  row-gap: var(--ds-space-1);
+  pointer-events: none;
+  margin: 0; padding: 0;
+  list-style: none;
+  display: grid;
+  position: absolute;
+  bottom: 15px; left: 15px;
+}
+.world__hint {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-micro);
+  letter-spacing: .6px;
+  color: var(--ds-chrome);
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+  display: flex;
+}
+.world__hint svg { flex: none; width: 16px; height: 16px; display: block; }
+
+/* ============================================================
+   7. INDEX + READOUT
+   ============================================================ */
+.index__title, .index__group, .index__item, .index__empty,
+.readout__empty, .readout__name, .readout__meta, .readout__group, .readout__more {
+  font-family: var(--ds-font-body);
+  font-weight: 300;
+  font-size: var(--ds-text-body);
+  line-height: var(--ds-leading-body);
+  letter-spacing: var(--ds-track-body);
+  color: var(--ds-chrome);
+  margin: 0;
+}
+.index__title, .index__count, .index__empty,
+.readout__empty, .readout__meta, .readout__more { color: var(--ds-ink-faint); }
+.index__group, .readout__group { margin-top: 24px; }
+.index__list {
+  margin: var(--ds-space-1) 0 0;
+  row-gap: var(--ds-space-2);
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+.index__list[hidden] { display: none; }
+.index__list--concepts { row-gap: var(--ds-space-1); padding-left: 24px; }
+.index__list--specimens { row-gap: var(--ds-space-1); padding-left: 16px; }
+.index__row { align-items: center; gap: var(--ds-space-1); display: flex; }
+.index__toggle {
+  width: 16px; height: 16px;
+  color: var(--ds-chrome);
+  cursor: pointer;
+  background: 0 0;
+  border: 0;
+  border-radius: 4px;
+  flex: none;
+  padding: 0;
+  display: flex;
+}
+.index__chevron {
+  width: 16px; height: 16px;
+  transition: transform var(--ds-dur-fast) var(--ds-ease);
+  display: block;
+  transform: rotate(90deg);
+}
+.index__toggle[aria-expanded="true"] .index__chevron { transform: rotate(180deg); }
+.index__item {
+  border-radius: var(--ds-radius-lg);
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background-color var(--ds-dur-fast) var(--ds-ease), color var(--ds-dur-fast) var(--ds-ease);
+  background: 0 0;
+  border: 0;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 8px;
+  display: inline-flex;
+}
+.index__item:hover { background: var(--ds-bg); }
+.index__item[aria-current="true"] {
+  background: var(--ds-inverse);
+  color: var(--ds-ink-inverse);
+  padding: 4px 16px;
+}
+.index__item[aria-current="true"] .index__count { color: var(--ds-ink-inverse-soft); }
+.index__item--hub { padding: 0; }
+.index__item--hub:hover { background: 0 0; }
+.index__item--hub[aria-current="true"] { margin: -4px -16px; padding: 4px 16px; }
+.readout__name { overflow-wrap: anywhere; font-weight: 400; }
+.readout__meta { margin-top: 4px; }
+.readout__touches {
+  margin: var(--ds-space-1) 0 0;
+  row-gap: var(--ds-space-1);
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+.readout__tag { font-size: var(--ds-text-body-sm); color: var(--ds-ink-faint); }
+.readout__more { padding-left: 8px; }
+
+/* ============================================================
+   8. RESPONSIVE
+   ============================================================ */
+@media (max-width: 1000px) {
+  .world { grid-template-rows: none; grid-template-columns: minmax(0, 1fr); }
+  .world__index, .world__readout, .world__card { grid-area: auto; }
+  .world__card { order: 1; }
+  .world__index { order: 2; height: 320px; }
+  .world__readout { order: 3; min-height: 88px; }
+  .world__stage { flex: none; height: clamp(440px, 60vh, 640px); }
+}
+@media (max-width: 767px) {
+  .tabs__fade { width: 96px; }
+  .world__stage { height: clamp(320px, 56svh, 560px); }
+}
+</style>
+</head>
+<body>
+
+<section class="model" aria-labelledby="model-title">
+  <div class="model__head">
+    <h1 class="model__title" id="model-title">Model your business</h1>
+    <p class="model__lede">Every contract, licence, notice, approval and event a business carries is already a node with relations to the others. Pick an industry to see that world drawn as a typed state graph: the domains of law it runs on, the instruments it turns on, and the questions where they contest each other.</p>
+  </div>
+
+  <div class="model__world">
+    <!-- Industry tabs -->
+    <div class="tabs" id="tabs" data-back="false" data-more="true">
+      <div class="tabs__strip" id="tabs-strip" role="tablist" aria-label="Industries"></div>
+      <div class="tabs__fade tabs__fade--start"></div>
+      <button type="button" class="tabs__arrow tabs__arrow--start" id="tabs-back" aria-label="Scroll industries left">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+      </button>
+      <div class="tabs__fade tabs__fade--end"></div>
+      <button type="button" class="tabs__arrow tabs__arrow--end" id="tabs-more" aria-label="Scroll industries right">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+      </button>
+    </div>
+
+    <p class="sr-only" aria-live="polite" id="model-status"></p>
+
+    <div class="world">
+      <!-- Index -->
+      <div class="world__index">
+        <div class="world__scroll">
+          <nav class="index" id="index" aria-label="Index">
+            <p class="index__title">Index</p>
+            <p class="index__empty">The world is being built.</p>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Stage -->
+      <div class="world__card">
+        <div class="world__stage" id="stage" tabindex="0" role="group" aria-label="The world" aria-describedby="model-legend">
+          <div class="world__host" data-ready="false"></div>
+          <div class="world__host" data-ready="false"></div>
+
+          <button type="button" class="world__btn world__reset" id="reset">Reset view</button>
+
+          <div class="world__zoom" role="group" aria-label="Zoom">
+            <button type="button" class="world__zoom-btn" id="zoom-in" aria-label="Zoom in">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21 12C21 12.1989 20.921 12.3897 20.7803 12.5303C20.6397 12.671 20.4489 12.75 20.25 12.75H12.75V20.25C12.75 20.4489 12.671 20.6397 12.5303 20.7803C12.3897 20.921 12.1989 21 12 21C11.8011 21 11.6103 20.921 11.4697 20.7803C11.329 20.6397 11.25 20.4489 11.25 20.25V12.75H3.75C3.55109 12.75 3.36032 12.671 3.21967 12.5303C3.07902 12.3897 3 12.1989 3 12C3 11.8011 3.07902 11.6103 3.21967 11.4697C3.36032 11.329 3.55109 11.25 3.75 11.25H11.25V3.75C11.25 3.55109 11.329 3.36032 11.4697 3.21967C11.6103 3.07902 11.8011 3 12 3C12.1989 3 12.3897 3.07902 12.5303 3.21967C12.671 3.36032 12.75 3.55109 12.75 3.75V11.25H20.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12Z"></path></svg>
+            </button>
+            <span class="world__zoom-pct" id="zoom-pct">100 %</span>
+            <button type="button" class="world__zoom-btn" id="zoom-out" aria-label="Zoom out">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21 12C21 12.1989 20.921 12.3897 20.7803 12.5303C20.6397 12.671 20.4489 12.75 20.25 12.75H3.75C3.55109 12.75 3.36032 12.671 3.21967 12.5303C3.07902 12.3897 3 12.1989 3 12C3 11.8011 3.07902 11.6103 3.21967 11.4697C3.36032 11.329 3.55109 11.25 3.75 11.25H20.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12Z"></path></svg>
+            </button>
+          </div>
+
+          <ul class="world__legend" id="model-legend" aria-label="How to move">
+            <li class="world__hint">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.5 4.5V7.5C13.5 8.95869 12.9205 10.3576 11.8891 11.3891C10.8576 12.4205 9.45869 13 8 13C6.54131 13 5.14236 12.4205 4.11091 11.3891C3.07946 10.3576 2.5 8.95869 2.5 7.5V6.5C2.5 6.23478 2.60536 5.98043 2.79289 5.79289C2.98043 5.60536 3.23478 5.5 3.5 5.5C3.76522 5.5 4.01957 5.60536 4.20711 5.79289C4.39464 5.98043 4.5 6.23478 4.5 6.5V7C4.5 7.13261 4.55268 7.25979 4.64645 7.35355C4.74021 7.44732 4.86739 7.5 5 7.5C5.13261 7.5 5.25979 7.44732 5.35355 7.35355C5.44732 7.25979 5.5 7.13261 5.5 7V3.5C5.5 3.23478 5.60536 2.98043 5.79289 2.79289C5.98043 2.60536 6.23478 2.5 6.5 2.5C6.76522 2.5 7.01957 2.60536 7.20711 2.79289C7.39464 2.98043 7.5 3.23478 7.5 3.5V4.5C7.5 4.63261 7.55268 4.75979 7.64645 4.85355C7.74021 4.94732 7.86739 5 8 5C8.13261 5 8.25979 4.94732 8.35355 4.85355C8.44732 4.75979 8.5 4.63261 8.5 4.5V3.5C8.5 3.23478 8.60536 2.98043 8.79289 2.79289C8.98043 2.60536 9.23478 2.5 9.5 2.5C9.76522 2.5 10.0196 2.60536 10.2071 2.79289C10.3946 2.98043 10.5 3.23478 10.5 3.5V4.5C10.5 4.63261 10.5527 4.75979 10.6464 4.85355C10.7402 4.94732 10.8674 5 11 5C11.1326 5 11.2598 4.94732 11.3536 4.85355C11.4473 4.75979 11.5 4.63261 11.5 4.5C11.5 4.23478 11.6054 3.98043 11.7929 3.79289C11.9804 3.60536 12.2348 3.5 12.5 3.5C12.7652 3.5 13.0196 3.60536 13.2071 3.79289C13.3946 3.98043 13.5 4.23478 13.5 4.5Z"></path></svg>
+              <span>Drag to orbit</span>
+            </li>
+            <li class="world__hint">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.7806 11.9269C13.8505 11.9966 13.906 12.0793 13.9439 12.1705C13.9817 12.2617 14.0012 12.3594 14.0012 12.4581C14.0012 12.5568 13.9817 12.6546 13.9439 12.7457C13.906 12.8369 13.8505 12.9197 13.7806 12.9894L12.9875 13.7806C12.9178 13.8505 12.835 13.906 12.7439 13.9439C12.6527 13.9817 12.555 14.0012 12.4563 14.0012C12.3575 14.0012 12.2598 13.9817 12.1686 13.9439C12.0775 13.906 11.9947 13.8505 11.925 13.7806L8.39 10.245L7.1875 13.3806C7.1875 13.3869 7.1825 13.3938 7.17938 13.4006C7.10285 13.579 6.97554 13.731 6.81328 13.8376C6.65103 13.9441 6.461 14.0006 6.26687 14H6.2175C6.01504 13.9914 5.8201 13.9209 5.65903 13.7979C5.49796 13.675 5.37852 13.5055 5.31687 13.3125L2.05 3.3075C1.99392 3.13252 1.98713 2.94548 2.03038 2.7669C2.07363 2.58832 2.16525 2.4251 2.29518 2.29518C2.4251 2.16525 2.58832 2.07363 2.7669 2.03038C2.94548 1.98713 3.13252 1.99392 3.3075 2.05L13.3125 5.31687C13.5037 5.38084 13.6711 5.50112 13.7928 5.66192C13.9144 5.82273 13.9846 6.01655 13.9941 6.21796C14.0037 6.41936 13.9521 6.61895 13.8462 6.79052C13.7403 6.96209 13.5849 7.09764 13.4006 7.17938L13.3806 7.1875L10.245 8.39188L13.7806 11.9269ZM6 2C6.13261 2 6.25978 1.94732 6.35355 1.85355C6.44732 1.75979 6.5 1.63261 6.5 1.5V1C6.5 0.867392 6.44732 0.740215 6.35355 0.646447C6.25978 0.552678 6.13261 0.5 6 0.5C5.86739 0.5 5.74021 0.552678 5.64645 0.646447C5.55268 0.740215 5.5 0.867392 5.5 1V1.5C5.5 1.63261 5.55268 1.75979 5.64645 1.85355C5.74021 1.94732 5.86739 2 6 2ZM1 6.5H1.5C1.63261 6.5 1.75979 6.44732 1.85355 6.35355C1.94732 6.25978 2 6.13261 2 6C2 5.86739 1.94732 5.74021 1.85355 5.64645C1.75979 5.55268 1.63261 5.5 1.5 5.5H1C0.867392 5.5 0.740215 5.55268 0.646447 5.64645C0.552678 5.74021 0.5 5.86739 0.5 6C0.5 6.13261 0.552678 6.25978 0.646447 6.35355C0.740215 6.44732 0.867392 6.5 1 6.5ZM7.77625 2.4475C7.83501 2.47693 7.89899 2.49448 7.96454 2.49916C8.03009 2.50384 8.09591 2.49555 8.15826 2.47477C8.2206 2.45399 8.27823 2.42112 8.32786 2.37805C8.3775 2.33498 8.41815 2.28255 8.4475 2.22375L8.9475 1.22375C9.00684 1.10515 9.01664 0.967831 8.97474 0.842006C8.93283 0.716181 8.84266 0.612155 8.72406 0.552813C8.60546 0.49347 8.46814 0.483673 8.34232 0.525576C8.21649 0.567478 8.11247 0.657649 8.05313 0.77625L7.55312 1.77625C7.52368 1.83497 7.50609 1.89892 7.50136 1.96444C7.49664 2.02996 7.50487 2.09577 7.5256 2.15811C7.54632 2.22045 7.57912 2.27809 7.62213 2.32775C7.66514 2.3774 7.71751 2.41809 7.77625 2.4475ZM1.77625 7.55312L0.77625 8.05313C0.657649 8.11247 0.567478 8.21649 0.525576 8.34232C0.483673 8.46814 0.49347 8.60546 0.552813 8.72406C0.612155 8.84266 0.716181 8.93283 0.842006 8.97474C0.967831 9.01664 1.10515 9.00684 1.22375 8.9475L2.22375 8.4475C2.28248 8.41812 2.33484 8.37745 2.37785 8.32783C2.42086 8.27821 2.45368 8.22061 2.47442 8.15831C2.49517 8.096 2.50345 8.03023 2.49877 7.96473C2.4941 7.89923 2.47657 7.83529 2.44719 7.77656C2.4178 7.71784 2.37714 7.66547 2.32752 7.62246C2.2779 7.57945 2.2203 7.54664 2.15799 7.52589C2.09569 7.50514 2.02991 7.49687 1.96441 7.50154C1.89891 7.50621 1.83498 7.52374 1.77625 7.55312Z"></path></svg>
+              <span>Click a node to trace it</span>
+            </li>
+            <li class="world__hint">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path transform="translate(2 2)" fill-rule="evenodd" clip-rule="evenodd" d="M12 11V1C12 0.734784 11.8946 0.48043 11.7071 0.292893C11.5196 0.105357 11.2652 0 11 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1V11C0 11.2652 0.105357 11.5196 0.292893 11.7071C0.48043 11.8946 0.734784 12 1 12H11C11.2652 12 11.5196 11.8946 11.7071 11.7071C11.8946 11.5196 12 11.2652 12 11Z"></path><text x="8" y="8.2" text-anchor="middle" dominant-baseline="central" style="font-family:var(--ds-font-mono);font-size:5.217px;letter-spacing:0.26px;fill:var(--ds-ink-inverse)">esc</text></svg>
+              <span>Esc to let go</span>
+            </li>
+            <li class="world__hint">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13 2H3C2.73478 2 2.48043 2.10536 2.29289 2.29289C2.10536 2.48043 2 2.73478 2 3V13C2 13.2652 2.10536 13.5196 2.29289 13.7071C2.48043 13.8946 2.73478 14 3 14H13C13.2652 14 13.5196 13.8946 13.7071 13.7071C13.8946 13.5196 14 13.2652 14 13V3C14 2.73478 13.8946 2.48043 13.7071 2.29289C13.5196 2.10536 13.2652 2 13 2ZM3.5 6C3.5 5.86739 3.55268 5.74021 3.64645 5.64645C3.74021 5.55268 3.86739 5.5 4 5.5H5V4.5C5 4.36739 5.05268 4.24021 5.14645 4.14645C5.24021 4.05268 5.36739 4 5.5 4C5.63261 4 5.75979 4.05268 5.85355 4.14645C5.94732 4.24021 6 4.36739 6 4.5V5.5H7C7.13261 5.5 7.25979 5.55268 7.35355 5.64645C7.44732 5.74021 7.5 5.86739 7.5 6C7.5 6.13261 7.44732 6.25979 7.35355 6.35355C7.25979 6.44732 7.13261 6.5 7 6.5H6V7.5C6 7.63261 5.94732 7.75979 5.85355 7.85355C5.75979 7.94732 5.63261 8 5.5 8C5.36739 8 5.24021 7.94732 5.14645 7.85355C5.05268 7.75979 5 7.63261 5 7.5V6.5H4C3.86739 6.5 3.74021 6.44732 3.64645 6.35355C3.55268 6.25979 3.5 6.13261 3.5 6ZM5 12C4.90105 12.0001 4.80431 11.9708 4.72201 11.9159C4.63971 11.8609 4.57556 11.7828 4.53769 11.6914C4.49981 11.6 4.48991 11.4994 4.50924 11.4023C4.52856 11.3053 4.57624 11.2162 4.64625 11.1462L10.6462 5.14625C10.6927 5.09979 10.7479 5.06294 10.8086 5.0378C10.8692 5.01266 10.9343 4.99972 11 4.99972C11.0657 4.99972 11.1308 5.01266 11.1914 5.0378C11.2521 5.06294 11.3073 5.09979 11.3538 5.14625C11.4002 5.1927 11.4371 5.24786 11.4622 5.30855C11.4873 5.36925 11.5003 5.4343 11.5003 5.5C11.5003 5.5657 11.4873 5.63075 11.4622 5.69145C11.4371 5.75214 11.4002 5.8073 11.3538 5.85375L5.35375 11.8538C5.30728 11.9002 5.25212 11.937 5.19142 11.9621C5.13073 11.9872 5.06568 12.0001 5 12ZM12 11.5H9C8.86739 11.5 8.74021 11.4473 8.64645 11.3536C8.55268 11.2598 8.5 11.1326 8.5 11C8.5 10.8674 8.55268 10.7402 8.64645 10.6464C8.74021 10.5527 8.86739 10.5 9 10.5H12C12.1326 10.5 12.2598 10.5527 12.3536 10.6464C12.4473 10.7402 12.5 10.8674 12.5 11C12.5 11.1326 12.4473 11.2598 12.3536 11.3536C12.2598 11.4473 12.1326 11.5 12 11.5Z"></path></svg>
+              <span>Plus minus to zoom</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Readout -->
+      <div class="world__readout">
+        <div class="world__scroll" id="readout">
+          <p class="readout__empty">Trace a node to read it here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script id="corpus-data" type="application/json">{"industries":[{"key":"enterprise-compliance","label":"Enterprise compliance","icon":"clipboard","vertical":1,"overlay":"enterprise-compliance","subject":"an enterprise and its compliance"},{"key":"infrastructure","label":"Infrastructure and construction","icon":"crane","vertical":2,"overlay":"infrastructure","subject":"an infrastructure and construction business"},{"key":"real-estate","label":"Land and real estate","icon":"plot","vertical":3,"overlay":"real-estate","subject":"a land and real estate business"},{"key":"deals","label":"Deals and private capital","icon":"handshake","vertical":4,"overlay":"deals","subject":"a private capital investor and its deals"},{"key":"banking","label":"Banking and credit","icon":"bank","vertical":5,"overlay":"banking","subject":"a bank or lender and its book"},{"key":"insurance","label":"Insurance","icon":"umbrella","vertical":6,"overlay":"insurance","subject":"an insurer and its policies"},{"key":"public-markets","label":"Public markets","icon":"chart","vertical":7,"overlay":"public-markets","subject":"a public markets investor"},{"key":"courts","label":"Courts and evidence","icon":"scales","vertical":8,"overlay":"courts","subject":"a court and the evidence before it"},{"key":"government","label":"Government and policy","icon":"landmark","vertical":9,"overlay":"government","subject":"a government and its policymaking"},{"key":"regulators","label":"Regulators and enforcement","icon":"badge","vertical":10,"overlay":"regulators","subject":"a regulator and its enforcement"},{"key":"supply-chain","label":"Supply chain","icon":"truck","vertical":11,"overlay":"supply-chain","subject":"a supply chain business"},{"key":"tax","label":"Tax and structuring","icon":"percent","vertical":12,"overlay":"tax","subject":"a group and its tax and corporate structure"},{"key":"pharma","label":"Pharma and market access","icon":"capsule","vertical":13,"overlay":"pharma","subject":"a pharma business and its market access"},{"key":"data-ai","label":"Data and AI","icon":"chip","vertical":14,"overlay":"data-ai","subject":"a data and AI business"},{"key":"legal-ai","label":"Legal AI and agents","icon":"bot","vertical":15,"overlay":"legal-ai","subject":"a legal AI agent and the field it acts in"}],"baseDomains":["Contract Law","Corporate","Property","Insolvency","Arbitration","Civil Procedure","Evidence","Employment"],"specimenSet":["Board Resolution — Specimen","Arbitral Award — Specimen","Sale Deed — Specimen","Shareholders Agreement","Insolvency Petition — NCLT","Section 65B Certificate","Legal Notice — Reply","Mutual NDA — Standard Form"],"extraDomains":{"Goods and Carriage":["Sale of Goods Act","Passing of Property","Risk in Transit","Delivery","Unpaid Seller","Lien on Goods","Stoppage in Transit","Bill of Lading","Consignment Note","Carrier Liability","Multimodal Transport","Incoterms","Demurrage","Warehouse Receipt"],"Customs and Trade":["Customs Act","Bill of Entry","Shipping Bill","Harmonised Classification","Country of Origin","Rules of Origin","Duty Drawback","Advance Authorisation","Bonded Warehouse","Export Obligation","Anti-Dumping Duty","Letter of Credit","Import Licence"],"Vendor and Compliance":["Vendor Agreement","Purchase Order","Framework Agreement","Service Level","Sub-Contracting","Change of Law","Price Escalation","Audit Right","Step-In Right","Supplier Code of Conduct","E-Way Bill","GST Invoice","Input Tax Credit","Termination for Convenience","Exclusivity"],"Obligations and Controls":["Compliance Register","Secretarial Standards","Secretarial Audit","Annual Return","Statutory Audit","Internal Financial Controls","Whistleblower Policy","Code of Conduct","CSR Obligation","Prevention of Corruption Act","Anti-Money Laundering","Delegation of Authority","Risk Management Committee","Compounding of Offences","Regulatory Filing","Register of Charges"],"Construction Contract":["EPC Contract","Bill of Quantities","Variation Order","Extension of Time","Defects Liability Period","Retention Money","Performance Security","Mobilisation Advance","Taking Over","Time is of the Essence","Dispute Adjudication Board","Prolongation Cost","Nominated Subcontractor","Design Liability","Latent Defect","Interim Payment Certificate"],"Approvals and Concessions":["Concession Agreement","Public Private Partnership","Build Operate Transfer","Viability Gap Funding","Right of Way","Environmental Clearance","Land Acquisition Act","Termination Payment","Change in Scope","Electricity Act","Tariff Order","Power Purchase Agreement","Substitution Right","Independent Engineer"],"Land and Title":["Title Search","Chain of Title","Revenue Record","Record of Rights","Survey Number","Land Ceiling","Conversion of Land Use","Benami Transactions Act","Power of Attorney","Agreement to Sell","Encumbrance Certificate","Land Acquisition Act","Lis Pendens","Part Performance","Undivided Share","Title Insurance"],"Development and Approvals":["Joint Development Agreement","Floor Space Index","Transferable Development Rights","Building Plan Sanction","Occupancy Certificate","Completion Certificate","Carpet Area","Allottee","Builder Buyer Agreement","Project Registration","Project Escrow","Possession Date","Common Areas","Apartment Ownership Act","Deemed Conveyance","Redevelopment"],"Deal Terms":["Share Purchase Agreement","Share Subscription Agreement","Representations and Warranties","Conditions Precedent","Closing","Earn-Out","Escrow","Material Adverse Change","Disclosure Letter","Purchase Price Adjustment","Locked Box","Anti-Dilution","Right of First Refusal","Put Option","Reserved Matters","Deadlock"],"Fundraising":["Private Placement","Preference Shares","Compulsorily Convertible Debenture","Convertible Note","Valuation Report","Pricing Guidelines","FEMA","Foreign Direct Investment","Sectoral Cap","Downstream Investment","Alternative Investment Fund","Limited Partner","Carried Interest","Founder Vesting"],"Merger Control":["Competition Act","Competition Commission","Combination","Notifiable Transaction","Gun Jumping","Standstill Obligation","Green Channel","Deal Value Threshold","Relevant Market","Appreciable Adverse Effect","Structural Remedy","Scheme of Arrangement"],"Security and Priority":["Facility Agreement","Term Loan","Working Capital Facility","Hypothecation","Pledge","Equitable Mortgage","Fixed Charge","Floating Charge","Registration of Charge","Pari Passu","Negative Pledge","Security Trustee","Consortium Lending","Inter-Creditor Agreement","Letter of Comfort","Financial Covenant"],"Default and Recovery":["SARFAESI Act","Recovery of Debts Act","Debt Recovery Tribunal","Banking Regulation Act","Non-Performing Asset","Event of Default","Cross Default","Acceleration","Enforcement of Security","Symbolic Possession","Physical Possession","One Time Settlement","Wilful Defaulter","Asset Reconstruction Company","Restructuring","Personal Guarantor"],"Policy and Cover":["Insurance Act","IRDAI","Insurable Interest","Utmost Good Faith","Material Fact","Proposal Form","Policy Wording","Exclusion Clause","Policy Warranty","Premium","Sum Insured","Deductible","Endorsement","Reinsurance","Nomination","Assignment of Policy"],"Claims and Causation":["Proximate Cause","Notice of Loss","Surveyor Report","Loss Assessor","Repudiation","Non-Disclosure","Subrogation","Contribution","Average Clause","Salvage","Third Party Liability","Motor Vehicles Act","Motor Accident Claims Tribunal","Insurance Ombudsman","Consumer Protection Act","Deficiency in Service"],"Securities and Markets":["SEBI Act","Securities Contracts Regulation Act","Listing Regulations","Insider Trading Regulations","Unpublished Price Sensitive Information","Trading Window","Fraudulent and Unfair Trade Practices","Continuous Disclosure","Depository","Dematerialisation","Stock Exchange","Clearing Corporation","Registered Intermediary","Mutual Fund","Securities Appellate Tribunal","Settlement Order"],"Corporate Actions and Events":["Initial Public Offering","Red Herring Prospectus","Book Building","Qualified Institutions Placement","Rights Issue","Buyback","Delisting","Open Offer","Takeover Regulations","Creeping Acquisition","Promoter","Independent Director","Audit Committee","Material Event","Dividend","Postal Ballot"],"Expert and Forensic":["Forensic Audit","Digital Forensics","Hash Value","Metadata","Call Detail Record","Forensic Science Laboratory","Handwriting Expert","Expert Witness","Joint Expert Report","Court Commissioner","Interrogatories","Discovery and Inspection","Certified Copy","Notarisation"],"Appeal and Review":["Memorandum of Appeal","Grounds of Appeal","Stay Order","Condonation of Delay","Cross Objection","Substantial Question of Law","Remand","Letters Patent Appeal","Reference to Larger Bench","Reportable Judgment","Speaking Order","Contempt of Court","Court Fees Act","Commercial Courts Act","Summary Judgment"],"Legislation and Rules":["General Clauses Act","Delegated Legislation","Ordinance","Gazette Notification","Statement of Objects and Reasons","Legislative Competence","Seventh Schedule","Repeal and Savings","Retrospective Operation","Purposive Interpretation"],"Public Administration":["Right to Information Act","Public Procurement","Tender","Government Contract","Sovereign Immunity","Legitimate Expectation","Promissory Estoppel","Natural Justice","Proportionality","Section 80 Notice"],"Enforcement Process":["Show Cause Notice","Personal Hearing","Adjudication","Adjudicating Officer","Monetary Penalty","Consent Order","Inspection","Search and Seizure","Investigation Report","Cease and Desist","Disgorgement","Debarment","Appellate Authority","Statutory Appeal","Compliance Undertaking"],"Licence and Perimeter":["Certificate of Registration","Fit and Proper","Net Worth Requirement","Regulatory Perimeter","Master Direction","Circular","Regulatory Sandbox","No Objection Certificate","Prior Approval","Change in Control","Outsourcing Guidelines","Know Your Customer","Periodic Reporting","Cancellation of Registration"],"Direct Tax":["Income Tax Act","Assessment Order","Reassessment","Faceless Assessment","Tax Deducted at Source","Advance Tax","Capital Gains","Profits and Gains of Business","Permanent Establishment","Double Taxation Avoidance Agreement","Tax Residency Certificate","Transfer Pricing","Associated Enterprise","General Anti-Avoidance Rule","Dispute Resolution Panel","Income Tax Appellate Tribunal"],"Structuring":["Holding Company","Subsidiary","Limited Liability Partnership","Demerger","Slump Sale","Amalgamation","Place of Effective Management","Beneficial Ownership","Treaty Shopping","Round Tripping","Thin Capitalisation","Private Trust","Hindu Undivided Family","Overseas Direct Investment"],"Indirect Tax":["Goods and Services Tax","Input Tax Credit","Reverse Charge","Place of Supply","Time of Supply","Composite Supply","Zero-Rated Supply","Tariff Classification","Anti-Profiteering","Advance Ruling","Tax Demand","Refund Claim","Customs Duty","GST Appellate Tribunal"],"Drugs and Approvals":["Drugs and Cosmetics Act","New Drug","Clinical Trial","Ethics Committee","Marketing Authorisation","Manufacturing Licence","Good Manufacturing Practice","Bioequivalence","Schedule H","Drug Price Control Order","National List of Essential Medicines","Pharmacovigilance","Adverse Event","Batch Recall","Spurious Drug","Medical Device Rules"],"Patents and Licensing":["Patents Act","Patentability","Inventive Step","Enhanced Efficacy","Evergreening","Compulsory Licensing","Voluntary Licensing","Pre-Grant Opposition","Post-Grant Opposition","Patent Infringement","Research Exemption","Data Exclusivity","Technology Transfer","Trade Marks Act","Passing Off","Parallel Import"],"Data Protection":["Digital Personal Data Protection Act","Data Fiduciary","Data Principal","Data Processor","Consent Manager","Legitimate Use","Purpose Limitation","Personal Data Breach","Data Protection Board","Significant Data Fiduciary","Cross-Border Transfer","Information Technology Act","Intermediary Guidelines","Safe Harbour","Anonymisation","Reasonable Security Practices"],"Digital Assets and Models":["Copyright Act","Fair Dealing","Text and Data Mining","Training Data","Model Weights","Foundation Model","Computer Generated Work","Output Ownership","Open Source Licensing","Trade Secret","Source Code Escrow","Software as a Service","API Terms","Synthetic Data","Algorithmic Bias","Virtual Digital Asset"],"Agents and Liability":["Autonomous Agent","Agent Authority","Human in the Loop","Audit Trail","Explainability","Fabricated Citation","Automated Decision","Attribution","Vicarious Liability","Product Liability","Professional Negligence","Duty of Care","Unauthorised Practice of Law","Advocates Act","Legal Professional Privilege","Electronic Signature"]},"overlays":{"supply-chain":{"key":"supply-chain","hubs":["Goods and Carriage","Customs and Trade","Vendor and Compliance"],"bridges":[["Goods and Carriage","Contract Law"],["Vendor and Compliance","Contract Law"],["Customs and Trade","Goods and Carriage"],["Vendor and Compliance","Customs and Trade"],["Goods and Carriage","Evidence"]],"cross":[["Risk in Transit","Force Majeure"],["Delivery","Breach of Contract"],["Demurrage","Liquidated Damages"],["Carrier Liability","Limitation of Liability"],["Letter of Credit","Guarantee"],["Bill of Lading","Bailment"],["Warehouse Receipt","Bailment"],["Vendor Agreement","Standard Form Contract"],["Purchase Order","Acceptance"],["Step-In Right","Specific Performance"],["Change of Law","Frustration"],["Sub-Contracting","Agency"],["Export Obligation","Indemnity"],["Termination for Convenience","Damages"],["GST Invoice","Operational Creditor"],["Audit Right","Related Party Transaction"]],"contested":[["Demurrage","Penalty Clause"],["Change of Law","Force Majeure"],["Risk in Transit","Passing of Property"],["Termination for Convenience","Specific Performance"]],"documents":[{"t":"Vendor Agreement — Specimen","kind":"contract","links":["Vendor Agreement","Service Level","Termination for Convenience","Indemnity"]},{"t":"Purchase Order — Standard Form","kind":"form","links":["Purchase Order","Acceptance","Price Escalation"]},{"t":"Framework Agreement — Specimen","kind":"contract","links":["Framework Agreement","Exclusivity","Change of Law"]},{"t":"Bill of Lading — Specimen","kind":"certificate","links":["Bill of Lading","Carrier Liability","Risk in Transit"]},{"t":"Consignment Note — Specimen","kind":"form","links":["Consignment Note","Multimodal Transport","Delivery"]},{"t":"Warehouse Receipt — Specimen","kind":"certificate","links":["Warehouse Receipt","Bailment","Lien on Goods"]},{"t":"Import Entry — Specimen","kind":"form","links":["Bill of Entry","Harmonised Classification","Country of Origin"]},{"t":"Shipping Bill — Specimen","kind":"form","links":["Shipping Bill","Export Obligation","Duty Drawback"]},{"t":"Letter of Credit — Specimen","kind":"certificate","links":["Letter of Credit","Guarantee","Delivery"]},{"t":"E-Way Bill — Specimen","kind":"form","links":["E-Way Bill","GST Invoice","Delivery"]},{"t":"Force Majeure Notice — Specimen","kind":"notice","links":["Force Majeure","Risk in Transit","Frustration"]},{"t":"Supplier Code — Annexure","kind":"policy","links":["Supplier Code of Conduct","Audit Right","Sub-Contracting"]},{"t":"Demurrage Claim — Specimen","kind":"notice","links":["Demurrage","Liquidated Damages","Arbitration Clause"]}]},"enterprise-compliance":{"key":"enterprise-compliance","hubs":["Obligations and Controls","Vendor and Compliance"],"bridges":[["Obligations and Controls","Corporate"],["Vendor and Compliance","Contract Law"],["Obligations and Controls","Employment"],["Obligations and Controls","Vendor and Compliance"],["Obligations and Controls","Evidence"]],"cross":[["Annual Return","Companies Act"],["Secretarial Audit","Board Resolution"],["Internal Financial Controls","Director Duties"],["Whistleblower Policy","Termination"],["CSR Obligation","Companies Act"],["Register of Charges","Mortgage"],["Compounding of Offences","NCLT"],["Delegation of Authority","Agency"],["Anti-Money Laundering","Due Diligence"],["Regulatory Filing","SEBI"],["Prevention of Corruption Act","Director Duties"],["Compliance Register","Electronic Record"],["Vendor Agreement","Standard Form Contract"],["Audit Right","Related Party Transaction"],["Risk Management Committee","Board Resolution"],["Supplier Code of Conduct","Sub-Contracting"]],"contested":[["Statutory Audit","Director Duties"],["Code of Conduct","Standing Orders"],["Change of Law","Force Majeure"],["Audit Right","Sub-Contracting"]],"documents":[{"t":"Compliance Register — Extract","kind":"table","links":["Compliance Register","Regulatory Filing","Companies Act"]},{"t":"Whistleblower Policy — Annexure","kind":"policy","links":["Whistleblower Policy","Code of Conduct","Termination"]},{"t":"Code of Conduct — Annexure","kind":"policy","links":["Code of Conduct","Standing Orders","Supplier Code of Conduct"]},{"t":"Annual Return — Specimen","kind":"form","links":["Annual Return","Companies Act","Cap Table"]},{"t":"Secretarial Audit Report — Specimen","kind":"report","links":["Secretarial Audit","Secretarial Standards","Board Resolution"]},{"t":"Delegation Matrix — Annexure","kind":"table","links":["Delegation of Authority","Agency","Director Duties"]},{"t":"Vendor Agreement — Specimen","kind":"contract","links":["Vendor Agreement","Service Level","Audit Right","Indemnity"]},{"t":"Audit Findings — Report","kind":"report","links":["Statutory Audit","Internal Financial Controls","Related Party Transaction"]},{"t":"CSR Policy — Annexure","kind":"policy","links":["CSR Obligation","Companies Act","Board Resolution"]},{"t":"Compounding Application — Specimen","kind":"petition","links":["Compounding of Offences","NCLT","Regulatory Filing"]},{"t":"Charge Filing — Form","kind":"form","links":["Register of Charges","Mortgage","Companies Act"]},{"t":"Anti-Bribery Policy — Annexure","kind":"policy","links":["Prevention of Corruption Act","Anti-Money Laundering","Due Diligence"]},{"t":"Purchase Order — Standard Form","kind":"form","links":["Purchase Order","Acceptance","GST Invoice"]}]},"infrastructure":{"key":"infrastructure","hubs":["Construction Contract","Approvals and Concessions"],"bridges":[["Construction Contract","Contract Law"],["Approvals and Concessions","Property"],["Construction Contract","Arbitration"],["Approvals and Concessions","Construction Contract"],["Approvals and Concessions","Insolvency"]],"cross":[["Extension of Time","Force Majeure"],["Prolongation Cost","Damages"],["Defects Liability Period","Limitation Act"],["Performance Security","Guarantee"],["Variation Order","Quantum Meruit"],["Dispute Adjudication Board","Arbitration Clause"],["Interim Payment Certificate","Operational Creditor"],["Right of Way","Easement"],["Concession Agreement","Licence"],["Termination Payment","Liquidated Damages"],["Substitution Right","Financial Creditor"],["Land Acquisition Act","Marketable Title"],["Independent Engineer","Expert Opinion"],["Nominated Subcontractor","Privity"],["Time is of the Essence","Breach of Contract"],["Design Liability","Indemnity"]],"contested":[["Extension of Time","Liquidated Damages"],["Prolongation Cost","Force Majeure"],["Change in Scope","Variation Order"],["Termination Payment","Penalty Clause"]],"documents":[{"t":"EPC Contract — Specimen","kind":"contract","links":["EPC Contract","Performance Security","Defects Liability Period","Liquidated Damages"]},{"t":"Concession Agreement — Specimen","kind":"contract","links":["Concession Agreement","Termination Payment","Substitution Right","Licence"]},{"t":"Variation Order — Specimen","kind":"form","links":["Variation Order","Change in Scope","Quantum Meruit"]},{"t":"Extension of Time Claim — Specimen","kind":"notice","links":["Extension of Time","Force Majeure","Prolongation Cost"]},{"t":"Interim Payment Certificate — Specimen","kind":"certificate","links":["Interim Payment Certificate","Bill of Quantities","Retention Money"]},{"t":"Taking Over Certificate — Specimen","kind":"certificate","links":["Taking Over","Latent Defect","Defects Liability Period"]},{"t":"Performance Bank Guarantee — Specimen","kind":"certificate","links":["Performance Security","Guarantee","Mobilisation Advance"]},{"t":"Environmental Clearance — Extract","kind":"certificate","links":["Environmental Clearance","Right of Way","Land Acquisition Act"]},{"t":"Power Purchase Agreement — Specimen","kind":"contract","links":["Power Purchase Agreement","Tariff Order","Electricity Act"]},{"t":"Adjudication Decision — Specimen","kind":"award","links":["Dispute Adjudication Board","Arbitration Clause","Independent Engineer"]},{"t":"Tariff Order — Extract","kind":"judgment","links":["Tariff Order","Electricity Act","Power Purchase Agreement"]},{"t":"Subcontract — Specimen","kind":"contract","links":["Nominated Subcontractor","Privity","Design Liability"]},{"t":"Delay Notice — Specimen","kind":"notice","links":["Time is of the Essence","Breach of Contract","Extension of Time"]},{"t":"Request for Proposal — Extract","kind":"form","links":["Public Private Partnership","Build Operate Transfer","Viability Gap Funding"]}]},"real-estate":{"key":"real-estate","hubs":["Land and Title","Development and Approvals"],"bridges":[["Land and Title","Property"],["Development and Approvals","Property"],["Development and Approvals","Contract Law"],["Land and Title","Civil Procedure"],["Land and Title","Development and Approvals"]],"cross":[["Title Search","Marketable Title"],["Chain of Title","Sale Deed"],["Encumbrance Certificate","Encumbrance"],["Revenue Record","Mutation"],["Agreement to Sell","Specific Performance"],["Part Performance","Transfer of Property Act"],["Lis Pendens","Injunction"],["Power of Attorney","Agency"],["Undivided Share","Partition"],["Benami Transactions Act","Presumption"],["Project Registration","RERA"],["Builder Buyer Agreement","Standard Form Contract"],["Possession Date","Liquidated Damages"],["Joint Development Agreement","Stamp Duty"],["Deemed Conveyance","Registration Act"],["Allottee","RERA"]],"contested":[["Allottee","Financial Creditor"],["Agreement to Sell","Sale Deed"],["Power of Attorney","Sale Deed"],["Part Performance","Registration Act"]],"documents":[{"t":"Title Search Report — Specimen","kind":"report","links":["Title Search","Chain of Title","Marketable Title"]},{"t":"Encumbrance Certificate — Specimen","kind":"certificate","links":["Encumbrance Certificate","Encumbrance","Registration Act"]},{"t":"Agreement to Sell — Specimen","kind":"contract","links":["Agreement to Sell","Specific Performance","Stamp Duty"]},{"t":"Joint Development Agreement — Specimen","kind":"contract","links":["Joint Development Agreement","Floor Space Index","Project Escrow"]},{"t":"Builder Buyer Agreement — Specimen","kind":"contract","links":["Builder Buyer Agreement","Allottee","Possession Date","Carpet Area"]},{"t":"Occupancy Certificate — Specimen","kind":"certificate","links":["Occupancy Certificate","Building Plan Sanction","Completion Certificate"]},{"t":"Revenue Extract — Specimen","kind":"table","links":["Revenue Record","Record of Rights","Survey Number"]},{"t":"Power of Attorney — Specimen","kind":"deed","links":["Power of Attorney","Agency","Sale Deed"]},{"t":"Deemed Conveyance Order — Specimen","kind":"judgment","links":["Deemed Conveyance","Apartment Ownership Act","Common Areas"]},{"t":"Project Registration — Certificate","kind":"certificate","links":["Project Registration","RERA","Project Escrow"]},{"t":"Conversion Order — Specimen","kind":"notice","links":["Conversion of Land Use","Land Ceiling","Revenue Record"]},{"t":"Partition Suit — Plaint","kind":"petition","links":["Undivided Share","Partition","Plaint"]},{"t":"Lis Pendens Notice — Specimen","kind":"notice","links":["Lis Pendens","Injunction","Registration Act"]}]},"deals":{"key":"deals","hubs":["Deal Terms","Fundraising","Merger Control"],"bridges":[["Deal Terms","Corporate"],["Fundraising","Corporate"],["Merger Control","Corporate"],["Deal Terms","Contract Law"],["Fundraising","Deal Terms"]],"cross":[["Share Purchase Agreement","Share Transfer"],["Share Subscription Agreement","Shareholders Agreement"],["Representations and Warranties","Indemnity"],["Representations and Warranties","Misrepresentation"],["Conditions Precedent","Term Sheet"],["Disclosure Letter","Due Diligence"],["Anti-Dilution","Cap Table"],["Right of First Refusal","Articles of Association"],["Reserved Matters","Board Resolution"],["Put Option","Specific Performance"],["Preference Shares","Liquidation Preference"],["Founder Vesting","ESOP"],["Private Placement","Companies Act"],["Valuation Report","Expert Opinion"],["Scheme of Arrangement","NCLT"],["Deadlock","Mediation"]],"contested":[["Put Option","FEMA"],["Material Adverse Change","Frustration"],["Earn-Out","Purchase Price Adjustment"],["Gun Jumping","Conditions Precedent"]],"documents":[{"t":"Share Purchase Agreement — Specimen","kind":"contract","links":["Share Purchase Agreement","Representations and Warranties","Conditions Precedent","Indemnity"]},{"t":"Subscription Agreement — Specimen","kind":"contract","links":["Share Subscription Agreement","Anti-Dilution","Preference Shares"]},{"t":"Disclosure Letter — Specimen","kind":"notice","links":["Disclosure Letter","Due Diligence","Representations and Warranties"]},{"t":"Closing Checklist — Annexure","kind":"table","links":["Closing","Conditions Precedent","Escrow"]},{"t":"Valuation Report — Specimen","kind":"report","links":["Valuation Report","Pricing Guidelines","Expert Opinion"]},{"t":"Combination Notice — Form","kind":"form","links":["Combination","Notifiable Transaction","Competition Commission"]},{"t":"Commission Order — Extract","kind":"judgment","links":["Competition Commission","Appreciable Adverse Effect","Structural Remedy"]},{"t":"Scheme of Arrangement — Specimen","kind":"petition","links":["Scheme of Arrangement","NCLT","Companies Act"]},{"t":"Fund Documents — Extract","kind":"contract","links":["Alternative Investment Fund","Limited Partner","Carried Interest"]},{"t":"Convertible Note — Specimen","kind":"contract","links":["Convertible Note","Compulsorily Convertible Debenture","FEMA"]},{"t":"Option Deed — Specimen","kind":"deed","links":["Put Option","Right of First Refusal","Specific Performance"]},{"t":"Locked Box Accounts — Annexure","kind":"table","links":["Locked Box","Purchase Price Adjustment","Earn-Out"]},{"t":"FDI Filing — Form","kind":"form","links":["Foreign Direct Investment","Sectoral Cap","Downstream Investment"]}]},"banking":{"key":"banking","hubs":["Security and Priority","Default and Recovery"],"bridges":[["Security and Priority","Property"],["Security and Priority","Contract Law"],["Default and Recovery","Insolvency"],["Default and Recovery","Civil Procedure"],["Security and Priority","Default and Recovery"]],"cross":[["Equitable Mortgage","Mortgage"],["Pledge","Bailment"],["Registration of Charge","Companies Act"],["Personal Guarantor","Guarantee"],["Facility Agreement","Standard Form Contract"],["Financial Covenant","Breach of Contract"],["Acceleration","Financial Creditor"],["Event of Default","Section 7 Petition"],["Non-Performing Asset","Corporate Debtor"],["Debt Recovery Tribunal","Execution"],["Physical Possession","Injunction"],["Restructuring","Resolution Plan"],["Asset Reconstruction Company","Committee of Creditors"],["Pari Passu","Liquidation"],["Security Trustee","Agency"],["One Time Settlement","Novation"]],"contested":[["Letter of Comfort","Guarantee"],["Symbolic Possession","Physical Possession"],["Enforcement of Security","Moratorium"],["Personal Guarantor","Moratorium"]],"documents":[{"t":"Facility Agreement — Specimen","kind":"contract","links":["Facility Agreement","Financial Covenant","Event of Default","Cross Default"]},{"t":"Deed of Hypothecation — Specimen","kind":"deed","links":["Hypothecation","Floating Charge","Registration of Charge"]},{"t":"Memorandum of Deposit — Specimen","kind":"deed","links":["Equitable Mortgage","Mortgage","Registration Act"]},{"t":"Inter-Creditor Agreement — Specimen","kind":"contract","links":["Inter-Creditor Agreement","Pari Passu","Security Trustee","Consortium Lending"]},{"t":"Demand Notice — Specimen","kind":"notice","links":["SARFAESI Act","Enforcement of Security","Non-Performing Asset"]},{"t":"Possession Notice — Specimen","kind":"notice","links":["Symbolic Possession","Physical Possession","SARFAESI Act"]},{"t":"Recovery Application — Specimen","kind":"petition","links":["Debt Recovery Tribunal","Recovery of Debts Act","Execution"]},{"t":"Settlement Letter — Specimen","kind":"contract","links":["One Time Settlement","Novation","Personal Guarantor"]},{"t":"Assignment Agreement — Specimen","kind":"contract","links":["Asset Reconstruction Company","Financial Creditor","Non-Performing Asset"]},{"t":"Sanction Letter — Specimen","kind":"notice","links":["Term Loan","Working Capital Facility","Negative Pledge"]},{"t":"Letter of Comfort — Specimen","kind":"notice","links":["Letter of Comfort","Guarantee","Corporate Veil"]},{"t":"Restructuring Plan — Extract","kind":"report","links":["Restructuring","Resolution Plan","Committee of Creditors"]},{"t":"Pledge Agreement — Specimen","kind":"contract","links":["Pledge","Bailment","Share Transfer"]}]},"insurance":{"key":"insurance","hubs":["Policy and Cover","Claims and Causation"],"bridges":[["Policy and Cover","Contract Law"],["Claims and Causation","Evidence"],["Claims and Causation","Civil Procedure"],["Policy and Cover","Claims and Causation"]],"cross":[["Utmost Good Faith","Free Consent"],["Material Fact","Misrepresentation"],["Non-Disclosure","Fraud"],["Proposal Form","Offer"],["Policy Wording","Standard Form Contract"],["Exclusion Clause","Limitation of Liability"],["Insurable Interest","Indemnity"],["Subrogation","Damages"],["Assignment of Policy","Novation"],["Nomination","Will"],["Surveyor Report","Expert Opinion"],["Proximate Cause","Burden of Proof"],["Notice of Loss","Limitation Act"],["Repudiation","Breach of Contract"],["Motor Accident Claims Tribunal","Execution"],["Policy Warranty","Voidable Contract"]],"contested":[["Exclusion Clause","Proximate Cause"],["Policy Warranty","Material Fact"],["Nomination","Succession"],["Repudiation","Deficiency in Service"]],"documents":[{"t":"Policy Wording — Standard Form","kind":"policy","links":["Policy Wording","Exclusion Clause","Sum Insured","Deductible"]},{"t":"Proposal Form — Standard Form","kind":"form","links":["Proposal Form","Material Fact","Utmost Good Faith"]},{"t":"Endorsement — Specimen","kind":"certificate","links":["Endorsement","Premium","Policy Wording"]},{"t":"Surveyor Report — Specimen","kind":"report","links":["Surveyor Report","Loss Assessor","Expert Opinion","Average Clause"]},{"t":"Repudiation Letter — Specimen","kind":"notice","links":["Repudiation","Non-Disclosure","Exclusion Clause"]},{"t":"Claim Form — Standard Form","kind":"form","links":["Notice of Loss","Sum Insured","Salvage"]},{"t":"Reinsurance Treaty — Extract","kind":"contract","links":["Reinsurance","Contribution","Insurance Act"]},{"t":"Ombudsman Award — Specimen","kind":"award","links":["Insurance Ombudsman","Deficiency in Service","Repudiation"]},{"t":"Consumer Complaint — Specimen","kind":"petition","links":["Consumer Protection Act","Deficiency in Service","Damages"]},{"t":"Motor Claim Petition — Specimen","kind":"petition","links":["Motor Accident Claims Tribunal","Motor Vehicles Act","Third Party Liability"]},{"t":"Subrogation Receipt — Specimen","kind":"certificate","links":["Subrogation","Damages","Assignment of Policy"]},{"t":"Nomination Form — Standard Form","kind":"form","links":["Nomination","Succession","Will"]},{"t":"Regulatory Circular — Extract","kind":"notice","links":["IRDAI","Insurance Act","Policy Wording"]}]},"public-markets":{"key":"public-markets","hubs":["Securities and Markets","Corporate Actions and Events"],"bridges":[["Securities and Markets","Corporate"],["Corporate Actions and Events","Corporate"],["Securities and Markets","Corporate Actions and Events"],["Securities and Markets","Evidence"]],"cross":[["SEBI Act","SEBI"],["Listing Regulations","Related Party Transaction"],["Insider Trading Regulations","Director Duties"],["Unpublished Price Sensitive Information","Presumption"],["Fraudulent and Unfair Trade Practices","Fraud"],["Continuous Disclosure","Companies Act"],["Dematerialisation","Share Transfer"],["Securities Appellate Tribunal","Interim Relief"],["Red Herring Prospectus","Misrepresentation"],["Open Offer","Shareholders Agreement"],["Creeping Acquisition","Cap Table"],["Audit Committee","Related Party Transaction"],["Independent Director","Board Resolution"],["Buyback","Articles of Association"],["Promoter","Corporate Veil"],["Postal Ballot","Electronic Record"]],"contested":[["Unpublished Price Sensitive Information","Trading Window"],["Promoter","Independent Director"],["Open Offer","Creeping Acquisition"],["Settlement Order","Fraudulent and Unfair Trade Practices"]],"documents":[{"t":"Red Herring Prospectus — Extract","kind":"report","links":["Red Herring Prospectus","Initial Public Offering","Book Building","Misrepresentation"]},{"t":"Insider Trading Code — Annexure","kind":"policy","links":["Insider Trading Regulations","Unpublished Price Sensitive Information","Trading Window"]},{"t":"Open Offer Letter — Specimen","kind":"notice","links":["Open Offer","Takeover Regulations","Creeping Acquisition"]},{"t":"Adjudication Order — Extract","kind":"judgment","links":["Fraudulent and Unfair Trade Practices","SEBI Act","Settlement Order"]},{"t":"Appeal Memo — Specimen","kind":"petition","links":["Securities Appellate Tribunal","SEBI Act","Interim Relief"]},{"t":"Material Event Disclosure — Specimen","kind":"notice","links":["Material Event","Continuous Disclosure","Listing Regulations"]},{"t":"Buyback Offer — Specimen","kind":"notice","links":["Buyback","Companies Act","Board Resolution"]},{"t":"Delisting Offer — Specimen","kind":"notice","links":["Delisting","Stock Exchange","Promoter"]},{"t":"Placement Document — Extract","kind":"report","links":["Qualified Institutions Placement","Registered Intermediary","Continuous Disclosure"]},{"t":"Rights Issue Letter — Specimen","kind":"notice","links":["Rights Issue","Dividend","Cap Table"]},{"t":"Postal Ballot Notice — Specimen","kind":"notice","links":["Postal Ballot","Electronic Record","Related Party Transaction"]},{"t":"Audit Committee Minutes — Extract","kind":"resolution","links":["Audit Committee","Independent Director","Related Party Transaction"]},{"t":"Scheme Information Document — Extract","kind":"report","links":["Mutual Fund","SEBI","Registered Intermediary"]}]},"courts":{"key":"courts","spineHubs":["Contract Law","Corporate","Property","Insolvency","Arbitration","Civil Procedure","Evidence","Employment","Precedent"],"hubs":["Expert and Forensic","Appeal and Review"],"bridges":[["Expert and Forensic","Evidence"],["Appeal and Review","Civil Procedure"],["Appeal and Review","Precedent"],["Expert and Forensic","Civil Procedure"],["Appeal and Review","Arbitration"]],"cross":[["Expert Witness","Expert Opinion"],["Digital Forensics","Section 65B"],["Hash Value","Electronic Record"],["Forensic Audit","Fraud"],["Court Commissioner","Cross Examination"],["Interrogatories","Written Statement"],["Memorandum of Appeal","First Appeal"],["Substantial Question of Law","Second Appeal"],["Condonation of Delay","Limitation Act"],["Stay Order","Execution"],["Letters Patent Appeal","Division Bench"],["Reference to Larger Bench","Full Bench"],["Reportable Judgment","Law Report"],["Contempt of Court","Injunction"],["Commercial Courts Act","Mediation"],["Speaking Order","Ratio Decidendi"]],"contested":[["Hash Value","Section 65B"],["Metadata","Hearsay"],["Remand","Second Appeal"],["Reportable Judgment","Binding Precedent"]],"documents":[{"t":"Forensic Audit Report — Specimen","kind":"report","links":["Forensic Audit","Fraud","Expert Witness"]},{"t":"Digital Forensics Report — Specimen","kind":"report","links":["Digital Forensics","Hash Value","Metadata","Section 65B"]},{"t":"Memorandum of Appeal — Specimen","kind":"petition","links":["Memorandum of Appeal","Grounds of Appeal","First Appeal"]},{"t":"Condonation Application — Specimen","kind":"petition","links":["Condonation of Delay","Limitation Act","Affidavit"]},{"t":"Stay Order — Specimen","kind":"judgment","links":["Stay Order","Execution","Decree"]},{"t":"Expert Affidavit — Specimen","kind":"certificate","links":["Expert Witness","Expert Opinion","Handwriting Expert"]},{"t":"Commissioner Report — Specimen","kind":"report","links":["Court Commissioner","Cross Examination","Discovery and Inspection"]},{"t":"Interrogatories — Specimen","kind":"form","links":["Interrogatories","Written Statement","Discovery and Inspection"]},{"t":"Reference Order — Specimen","kind":"judgment","links":["Reference to Larger Bench","Full Bench","Binding Precedent"]},{"t":"Reportable Judgment — Extract","kind":"judgment","links":["Reportable Judgment","Law Report","Ratio Decidendi","Speaking Order"]},{"t":"Contempt Petition — Specimen","kind":"petition","links":["Contempt of Court","Injunction","Stay Order"]},{"t":"Summary Judgment — Specimen","kind":"judgment","links":["Summary Judgment","Commercial Courts Act","Decree"]},{"t":"Call Records — Extract","kind":"table","links":["Call Detail Record","Electronic Record","Chain of Custody"]},{"t":"FSL Report — Specimen","kind":"report","links":["Forensic Science Laboratory","Expert Opinion","Chain of Custody"]}]},"government":{"key":"government","spineHubs":["Contract Law","Corporate","Property","Insolvency","Arbitration","Civil Procedure","Evidence","Employment","Precedent","Constitutional Law"],"hubs":["Legislation and Rules","Public Administration"],"bridges":[["Legislation and Rules","Constitutional Law"],["Public Administration","Constitutional Law"],["Public Administration","Contract Law"],["Legislation and Rules","Precedent"],["Legislation and Rules","Public Administration"]],"cross":[["Legislative Competence","Federalism"],["Seventh Schedule","Federalism"],["Ordinance","Judicial Review"],["Delegated Legislation","Judicial Review"],["Retrospective Operation","Limitation Act"],["Purposive Interpretation","Ratio Decidendi"],["Gazette Notification","Presumption"],["Tender","Article 14"],["Government Contract","Standard Form Contract"],["Legitimate Expectation","Arbitrariness"],["Promissory Estoppel","Estoppel"],["Natural Justice","Due Process"],["Proportionality","Article 19"],["Section 80 Notice","Plaint"],["Right to Information Act","Public Interest Litigation"],["Public Procurement","Writ Petition"]],"contested":[["Delegated Legislation","Legislative Competence"],["Legitimate Expectation","Promissory Estoppel"],["Government Contract","Writ Petition"],["Sovereign Immunity","Damages"]],"documents":[{"t":"Gazette Notification — Specimen","kind":"notice","links":["Gazette Notification","Delegated Legislation","Presumption"]},{"t":"Draft Bill — Extract","kind":"policy","links":["Statement of Objects and Reasons","Legislative Competence","Seventh Schedule"]},{"t":"Ordinance — Specimen","kind":"notice","links":["Ordinance","Judicial Review","Repeal and Savings"]},{"t":"Tender Document — Standard Form","kind":"form","links":["Tender","Public Procurement","Article 14"]},{"t":"Government Contract — Specimen","kind":"contract","links":["Government Contract","Standard Form Contract","Sovereign Immunity"]},{"t":"RTI Reply — Specimen","kind":"notice","links":["Right to Information Act","Public Interest Litigation","Electronic Record"]},{"t":"Writ Petition — Specimen","kind":"petition","links":["Writ Petition","Natural Justice","Legitimate Expectation","Article 226"]},{"t":"Notice under Section 80 — Specimen","kind":"notice","links":["Section 80 Notice","Plaint","Summons"]},{"t":"Cabinet Note — Extract","kind":"policy","links":["Delegated Legislation","Proportionality","Directive Principles"]},{"t":"Policy Circular — Specimen","kind":"policy","links":["Promissory Estoppel","Legitimate Expectation","Gazette Notification"]}]},"regulators":{"key":"regulators","spineHubs":["Contract Law","Corporate","Property","Insolvency","Arbitration","Civil Procedure","Evidence","Employment","Precedent"],"hubs":["Enforcement Process","Licence and Perimeter"],"bridges":[["Enforcement Process","Evidence"],["Enforcement Process","Civil Procedure"],["Licence and Perimeter","Corporate"],["Enforcement Process","Precedent"],["Licence and Perimeter","Enforcement Process"]],"cross":[["Personal Hearing","Cross Examination"],["Adjudicating Officer","Tribunal"],["Statutory Appeal","High Court"],["Monetary Penalty","Execution"],["Search and Seizure","Chain of Custody"],["Investigation Report","Burden of Proof"],["Inspection","Electronic Record"],["Cease and Desist","Injunction"],["Consent Order","Estoppel"],["Certificate of Registration","Companies Act"],["Fit and Proper","Director Duties"],["Change in Control","Share Transfer"],["Prior Approval","Board Resolution"],["Know Your Customer","Due Diligence"],["Outsourcing Guidelines","Agency"],["Show Cause Notice","Limitation Act"]],"contested":[["Disgorgement","Monetary Penalty"],["Circular","Binding Precedent"],["Investigation Report","Show Cause Notice"],["Regulatory Sandbox","Regulatory Perimeter"]],"documents":[{"t":"Show Cause Notice — Specimen","kind":"notice","links":["Show Cause Notice","Investigation Report","Limitation Act"]},{"t":"Reply to Notice — Specimen","kind":"notice","links":["Show Cause Notice","Personal Hearing","Burden of Proof"]},{"t":"Adjudication Order — Specimen","kind":"judgment","links":["Adjudication","Adjudicating Officer","Monetary Penalty"]},{"t":"Consent Order — Specimen","kind":"judgment","links":["Consent Order","Compliance Undertaking","Estoppel"]},{"t":"Inspection Report — Specimen","kind":"report","links":["Inspection","Periodic Reporting","Electronic Record"]},{"t":"Seizure Memo — Specimen","kind":"form","links":["Search and Seizure","Chain of Custody","Primary Evidence"]},{"t":"Registration Certificate — Specimen","kind":"certificate","links":["Certificate of Registration","Net Worth Requirement","Fit and Proper"]},{"t":"Master Direction — Extract","kind":"policy","links":["Master Direction","Circular","Know Your Customer"]},{"t":"Sandbox Application — Form","kind":"form","links":["Regulatory Sandbox","Regulatory Perimeter","No Objection Certificate"]},{"t":"Appeal Memo — Specimen","kind":"petition","links":["Statutory Appeal","Appellate Authority","Tribunal"]},{"t":"Cease and Desist Order — Specimen","kind":"notice","links":["Cease and Desist","Injunction","Debarment"]},{"t":"Change in Control Application — Form","kind":"form","links":["Change in Control","Prior Approval","Share Transfer"]},{"t":"Outsourcing Policy — Annexure","kind":"policy","links":["Outsourcing Guidelines","Agency","Cancellation of Registration"]}]},"tax":{"key":"tax","hubs":["Direct Tax","Structuring","Indirect Tax"],"bridges":[["Direct Tax","Corporate"],["Structuring","Corporate"],["Indirect Tax","Contract Law"],["Direct Tax","Structuring"],["Indirect Tax","Structuring"]],"cross":[["Slump Sale","Due Diligence"],["Demerger","NCLT"],["Amalgamation","Companies Act"],["Holding Company","Corporate Veil"],["Subsidiary","Board Resolution"],["Private Trust","Will"],["Hindu Undivided Family","Succession"],["Beneficial Ownership","Cap Table"],["Capital Gains","Share Transfer"],["Tax Deducted at Source","Full and Final Settlement"],["Reassessment","Limitation Act"],["Transfer Pricing","Related Party Transaction"],["Goods and Services Tax","Consideration"],["Place of Supply","Territorial Jurisdiction"],["Tax Demand","Operational Creditor"],["General Anti-Avoidance Rule","Corporate Veil"]],"contested":[["Assessment Order","Res Judicata"],["Treaty Shopping","Tax Residency Certificate"],["General Anti-Avoidance Rule","Double Taxation Avoidance Agreement"],["Input Tax Credit","Tax Demand"]],"documents":[{"t":"Assessment Order — Specimen","kind":"judgment","links":["Assessment Order","Income Tax Act","Reassessment"]},{"t":"Reassessment Notice — Specimen","kind":"notice","links":["Reassessment","Limitation Act","Faceless Assessment"]},{"t":"Transfer Pricing Study — Extract","kind":"report","links":["Transfer Pricing","Associated Enterprise","Related Party Transaction"]},{"t":"Tax Residency Certificate — Specimen","kind":"certificate","links":["Tax Residency Certificate","Double Taxation Avoidance Agreement","Treaty Shopping"]},{"t":"Scheme of Demerger — Specimen","kind":"petition","links":["Demerger","NCLT","Companies Act"]},{"t":"Business Transfer Agreement — Specimen","kind":"contract","links":["Slump Sale","Due Diligence","Capital Gains"]},{"t":"Trust Deed — Specimen","kind":"deed","links":["Private Trust","Will","Succession"]},{"t":"Group Structure Chart — Annexure","kind":"table","links":["Holding Company","Subsidiary","Beneficial Ownership"]},{"t":"Advance Ruling — Specimen","kind":"judgment","links":["Advance Ruling","Tariff Classification","Composite Supply"]},{"t":"GST Demand Order — Specimen","kind":"judgment","links":["Tax Demand","Input Tax Credit","Reverse Charge"]},{"t":"Refund Application — Form","kind":"form","links":["Refund Claim","Zero-Rated Supply","Place of Supply"]},{"t":"Tribunal Appeal — Specimen","kind":"petition","links":["Income Tax Appellate Tribunal","Dispute Resolution Panel","First Appeal"]},{"t":"TDS Certificate — Specimen","kind":"certificate","links":["Tax Deducted at Source","Advance Tax","Full and Final Settlement"]}]},"pharma":{"key":"pharma","hubs":["Drugs and Approvals","Patents and Licensing"],"bridges":[["Patents and Licensing","Contract Law"],["Patents and Licensing","Civil Procedure"],["Drugs and Approvals","Evidence"],["Drugs and Approvals","Patents and Licensing"]],"cross":[["Patent Infringement","Injunction"],["Passing Off","Interim Relief"],["Voluntary Licensing","Licence"],["Technology Transfer","Limitation of Liability"],["Clinical Trial","Indemnity"],["Ethics Committee","Free Consent"],["Adverse Event","Damages"],["Batch Recall","Breach of Contract"],["Spurious Drug","Fraud"],["Bioequivalence","Expert Opinion"],["Manufacturing Licence","Bailment"],["Pre-Grant Opposition","Burden of Proof"],["Compulsory Licensing","Consideration"],["Pharmacovigilance","Electronic Record"]],"contested":[["Evergreening","Enhanced Efficacy"],["Post-Grant Opposition","Res Judicata"],["Research Exemption","Patent Infringement"],["Drug Price Control Order","National List of Essential Medicines"]],"documents":[{"t":"Clinical Trial Agreement — Specimen","kind":"contract","links":["Clinical Trial","Ethics Committee","Indemnity","Free Consent"]},{"t":"Marketing Authorisation — Specimen","kind":"certificate","links":["Marketing Authorisation","New Drug","Bioequivalence"]},{"t":"Manufacturing Licence — Specimen","kind":"certificate","links":["Manufacturing Licence","Good Manufacturing Practice","Drugs and Cosmetics Act"]},{"t":"Recall Notice — Specimen","kind":"notice","links":["Batch Recall","Adverse Event","Breach of Contract"]},{"t":"Pharmacovigilance Report — Specimen","kind":"report","links":["Pharmacovigilance","Adverse Event","Electronic Record"]},{"t":"Price Notification — Extract","kind":"notice","links":["Drug Price Control Order","National List of Essential Medicines","Schedule H"]},{"t":"Patent Specification — Extract","kind":"report","links":["Patentability","Inventive Step","Patents Act"]},{"t":"Pre-Grant Opposition — Specimen","kind":"petition","links":["Pre-Grant Opposition","Enhanced Efficacy","Burden of Proof"]},{"t":"Licence Agreement — Specimen","kind":"contract","links":["Voluntary Licensing","Licence","Technology Transfer"]},{"t":"Compulsory Licence Order — Specimen","kind":"judgment","links":["Compulsory Licensing","Consideration","Patents Act"]},{"t":"Infringement Suit — Plaint","kind":"petition","links":["Patent Infringement","Injunction","Plaint"]},{"t":"GMP Inspection — Report","kind":"report","links":["Good Manufacturing Practice","Spurious Drug","Drugs and Cosmetics Act"]},{"t":"Device Registration — Form","kind":"form","links":["Medical Device Rules","Marketing Authorisation","Manufacturing Licence"]}]},"data-ai":{"key":"data-ai","hubs":["Data Protection","Digital Assets and Models"],"bridges":[["Data Protection","Contract Law"],["Digital Assets and Models","Contract Law"],["Data Protection","Evidence"],["Data Protection","Digital Assets and Models"],["Digital Assets and Models","Employment"]],"cross":[["Data Processor","Agency"],["Data Principal","Free Consent"],["Consent Manager","Electronic Record"],["Personal Data Breach","Damages"],["Reasonable Security Practices","Indemnity"],["Safe Harbour","Limitation of Liability"],["Information Technology Act","Electronic Record"],["Cross-Border Transfer","Standard Form Contract"],["Legitimate Use","Offer Letter"],["Trade Secret","Non-Compete"],["Source Code Escrow","Bailment"],["API Terms","Standard Form Contract"],["Software as a Service","Limitation of Liability"],["Open Source Licensing","Licence"],["Significant Data Fiduciary","Director Duties"]],"contested":[["Text and Data Mining","Fair Dealing"],["Computer Generated Work","Output Ownership"],["Anonymisation","Data Principal"],["Safe Harbour","Foundation Model"]],"documents":[{"t":"Privacy Notice — Specimen","kind":"notice","links":["Data Fiduciary","Data Principal","Purpose Limitation"]},{"t":"Data Processing Agreement — Specimen","kind":"contract","links":["Data Processor","Cross-Border Transfer","Reasonable Security Practices","Indemnity"]},{"t":"Consent Form — Standard Form","kind":"form","links":["Consent Manager","Free Consent","Data Principal"]},{"t":"Breach Notification — Specimen","kind":"notice","links":["Personal Data Breach","Data Protection Board","Damages"]},{"t":"Board Order — Specimen","kind":"judgment","links":["Data Protection Board","Significant Data Fiduciary","Digital Personal Data Protection Act"]},{"t":"Model Licence — Specimen","kind":"contract","links":["Model Weights","Open Source Licensing","Licence"]},{"t":"Training Data Schedule — Annexure","kind":"table","links":["Training Data","Text and Data Mining","Copyright Act"]},{"t":"Terms of Service — Standard Form","kind":"policy","links":["Software as a Service","API Terms","Standard Form Contract","Limitation of Liability"]},{"t":"Escrow Agreement — Specimen","kind":"contract","links":["Source Code Escrow","Bailment","Trade Secret"]},{"t":"Model Card — Extract","kind":"report","links":["Foundation Model","Algorithmic Bias","Synthetic Data"]},{"t":"Intermediary Compliance — Report","kind":"report","links":["Intermediary Guidelines","Safe Harbour","Information Technology Act"]},{"t":"Copyright Assignment — Specimen","kind":"deed","links":["Computer Generated Work","Output Ownership","Copyright Act"]},{"t":"Custody Agreement — Specimen","kind":"contract","links":["Virtual Digital Asset","Bailment","Electronic Record"]}]},"legal-ai":{"key":"legal-ai","spineHubs":["Contract Law","Corporate","Property","Insolvency","Arbitration","Civil Procedure","Evidence","Employment","Precedent"],"hubs":["Agents and Liability","Data Protection"],"bridges":[["Agents and Liability","Contract Law"],["Agents and Liability","Precedent"],["Agents and Liability","Evidence"],["Data Protection","Contract Law"],["Agents and Liability","Data Protection"]],"cross":[["Agent Authority","Agency"],["Attribution","Acceptance"],["Autonomous Agent","Offer"],["Audit Trail","Electronic Record"],["Explainability","Expert Opinion"],["Fabricated Citation","Citation"],["Human in the Loop","Affidavit"],["Professional Negligence","Damages"],["Product Liability","Limitation of Liability"],["Vicarious Liability","Corporate Veil"],["Unauthorised Practice of Law","Void Agreement"],["Legal Professional Privilege","Admissibility"],["Electronic Signature","Primary Evidence"],["Data Processor","Agency"],["Personal Data Breach","Damages"],["Data Principal","Free Consent"]],"contested":[["Fabricated Citation","Professional Negligence"],["Automated Decision","Ratio Decidendi"],["Autonomous Agent","Unauthorised Practice of Law"],["Attribution","Vicarious Liability"]],"documents":[{"t":"Agent Terms — Standard Form","kind":"policy","links":["Autonomous Agent","Agent Authority","Limitation of Liability","Standard Form Contract"]},{"t":"Audit Trail — Extract","kind":"table","links":["Audit Trail","Electronic Record","Section 65B"]},{"t":"Engagement Letter — Specimen","kind":"contract","links":["Professional Negligence","Duty of Care","Legal Professional Privilege"]},{"t":"Verification Affidavit — Specimen","kind":"certificate","links":["Human in the Loop","Affidavit","Fabricated Citation"]},{"t":"Citation Check — Report","kind":"report","links":["Fabricated Citation","Citation","Neutral Citation"]},{"t":"Model Explanation — Report","kind":"report","links":["Explainability","Automated Decision","Expert Opinion"]},{"t":"Privacy Notice — Specimen","kind":"notice","links":["Data Fiduciary","Data Principal","Purpose Limitation"]},{"t":"Data Processing Agreement — Specimen","kind":"contract","links":["Data Processor","Cross-Border Transfer","Reasonable Security Practices","Indemnity"]},{"t":"Breach Notification — Specimen","kind":"notice","links":["Personal Data Breach","Data Protection Board","Damages"]},{"t":"Signature Certificate — Specimen","kind":"certificate","links":["Electronic Signature","Information Technology Act","Primary Evidence"]},{"t":"Practice Rules — Extract","kind":"policy","links":["Advocates Act","Unauthorised Practice of Law","Supreme Court"]},{"t":"Liability Allocation — Annexure","kind":"table","links":["Product Liability","Vicarious Liability","Attribution","Indemnity"]},{"t":"Intermediary Compliance — Report","kind":"report","links":["Intermediary Guidelines","Safe Harbour","Information Technology Act"]}]}},"baseCorpus":{"clusters":[{"hub":"Constitutional Law","items":["Fundamental Rights","Article 14","Article 19","Article 21","Article 32","Article 226","Basic Structure","Judicial Review","Directive Principles","Writ Petition","Habeas Corpus","Mandamus","Certiorari","Quo Warranto","Equality Before Law","Reasonable Classification","Arbitrariness","Due Process","Federalism","Emergency Provisions","Preamble","Constitution Bench","Curative Petition","Special Leave Petition","Public Interest Litigation"]},{"hub":"Contract Law","items":["Indian Contract Act","Offer","Acceptance","Consideration","Free Consent","Coercion","Undue Influence","Misrepresentation","Fraud","Void Agreement","Voidable Contract","Breach of Contract","Damages","Liquidated Damages","Penalty Clause","Specific Performance","Quantum Meruit","Frustration","Force Majeure","Indemnity","Limitation of Liability","Guarantee","Bailment","Agency","Novation","Privity","Standard Form Contract","Boilerplate"]},{"hub":"Criminal Law","items":["Indian Penal Code","Bharatiya Nyaya Sanhita","Mens Rea","Actus Reus","Culpable Homicide","Murder","Grievous Hurt","Criminal Conspiracy","Abetment","Cheating","Criminal Breach of Trust","Defamation","Bail","Anticipatory Bail","First Information Report","Charge Sheet","Cognizable Offence","Custodial Interrogation","Confession","Beyond Reasonable Doubt","Acquittal","Sentencing"]},{"hub":"Evidence","items":["Indian Evidence Act","Relevancy","Admissibility","Hearsay","Dying Declaration","Expert Opinion","Primary Evidence","Secondary Evidence","Section 65B","Electronic Record","Chain of Custody","Presumption","Estoppel","Res Gestae","Burden of Proof","Hostile Witness","Cross Examination","Affidavit"]},{"hub":"Civil Procedure","items":["Code of Civil Procedure","Plaint","Written Statement","Cause of Action","Territorial Jurisdiction","Res Judicata","Limitation Act","Injunction","Interim Relief","Ex Parte Order","Decree","Execution","First Appeal","Second Appeal","Revision","Review","Costs","Summons"]},{"hub":"Property","items":["Transfer of Property Act","Sale Deed","Mortgage","Lease","Licence","Easement","Adverse Possession","Marketable Title","Encumbrance","Partition","Succession","Will","Probate","Gift Deed","RERA","Mutation","Stamp Duty","Registration Act"]},{"hub":"Employment","items":["Industrial Disputes Act","Workman","Retrenchment","Standing Orders","Gratuity","Provident Fund","Minimum Wages","POSH Act","Internal Committee","Termination","Notice Period","Non-Compete","Employment Bond","Moonlighting","Offer Letter","Full and Final Settlement"]},{"hub":"Corporate","items":["Companies Act","Director Duties","Board Resolution","Shareholders Agreement","Articles of Association","Due Diligence","SEBI","Related Party Transaction","Corporate Veil","Share Transfer","Drag Along","Tag Along","Liquidation Preference","ESOP","Term Sheet","Cap Table"]},{"hub":"Insolvency","items":["Insolvency and Bankruptcy Code","NCLT","NCLAT","Moratorium","Resolution Professional","Committee of Creditors","Resolution Plan","Corporate Debtor","Operational Creditor","Financial Creditor","Liquidation","Section 7 Petition","Section 9 Petition","Haircut"]},{"hub":"Arbitration","items":["Arbitration and Conciliation Act","Arbitration Clause","Arbitral Award","Seat of Arbitration","Venue","Section 11","Section 34","Section 37","Emergency Arbitrator","Institutional Arbitration","Ad Hoc Arbitration","Mediation","Conciliation","Enforcement of Award","New York Convention","Interim Measures"]},{"hub":"Precedent","items":["Supreme Court","High Court","District Court","Tribunal","Ratio Decidendi","Obiter Dicta","Stare Decisis","Binding Precedent","Persuasive Value","Per Incuriam","Overruled","Distinguished","Full Bench","Division Bench","Coram","Headnote","Citation","Law Report","Neutral Citation","Sub Silentio"]},{"hub":"Nyayanidhi","items":["Legal State Machine","Typed Artefact","The Ether","The Field","Norm","Gate","Operation","Precondition","Write-Set","Cascade","Event Log","Assertion","Provenance","Defeater","Simulation","Branch Space","Lean Certificate","Jurisdiction Pack","Rilin","Ferrock"]}],"bridges":[["Constitutional Law","Precedent"],["Constitutional Law","Criminal Law"],["Criminal Law","Evidence"],["Evidence","Civil Procedure"],["Civil Procedure","Precedent"],["Contract Law","Arbitration"],["Contract Law","Corporate"],["Corporate","Insolvency"],["Insolvency","Civil Procedure"],["Property","Civil Procedure"],["Property","Contract Law"],["Employment","Contract Law"],["Employment","Constitutional Law"],["Nyayanidhi","Contract Law"],["Nyayanidhi","Precedent"],["Nyayanidhi","Arbitration"],["Arbitration","Civil Procedure"]],"cross":[["Article 21","Bail"],["Article 21","Due Process"],["Article 14","Arbitrariness"],["Article 32","Writ Petition"],["Article 226","Writ Petition"],["Judicial Review","Basic Structure"],["Special Leave Petition","Supreme Court"],["Section 65B","Electronic Record"],["Section 65B","Admissibility"],["Burden of Proof","Beyond Reasonable Doubt"],["Confession","Custodial Interrogation"],["Dying Declaration","Murder"],["Charge Sheet","First Information Report"],["Arbitration Clause","Breach of Contract"],["Arbitral Award","Enforcement of Award"],["Section 34","Arbitral Award"],["Seat of Arbitration","Territorial Jurisdiction"],["New York Convention","Enforcement of Award"],["Emergency Arbitrator","Interim Measures"],["Interim Measures","Injunction"],["Force Majeure","Frustration"],["Liquidated Damages","Damages"],["Penalty Clause","Liquidated Damages"],["Specific Performance","Sale Deed"],["Indemnity","Limitation of Liability"],["Guarantee","Financial Creditor"],["Moratorium","Execution"],["Resolution Plan","Committee of Creditors"],["Corporate Veil","Director Duties"],["Related Party Transaction","Due Diligence"],["Term Sheet","Shareholders Agreement"],["ESOP","Termination"],["Non-Compete","Article 19"],["Employment Bond","Void Agreement"],["POSH Act","Internal Committee"],["Retrenchment","Industrial Disputes Act"],["Adverse Possession","Limitation Act"],["Stamp Duty","Registration Act"],["Will","Succession"],["Probate","Will"],["RERA","Sale Deed"],["Res Judicata","Binding Precedent"],["Ratio Decidendi","Binding Precedent"],["Obiter Dicta","Persuasive Value"],["Citation","Neutral Citation"],["Typed Artefact","The Field"],["Norm","Gate"],["Gate","Operation"],["Operation","Cascade"],["Operation","Notice Period"],["Branch Space","Mediation"],["Typed Artefact","Standard Form Contract"],["Event Log","Provenance"],["Assertion","Defeater"],["Rilin","Breach of Contract"],["Ferrock","Due Diligence"]],"contested":[["Per Incuriam","Binding Precedent"],["Overruled","Stare Decisis"],["Distinguished","Ratio Decidendi"],["Sub Silentio","Persuasive Value"],["Penalty Clause","Damages"],["Employment Bond","Article 19"],["Moonlighting","Non-Compete"],["Haircut","Operational Creditor"],["Adverse Possession","Marketable Title"],["Hostile Witness","Confession"],["Emergency Provisions","Fundamental Rights"],["Venue","Seat of Arbitration"],["Ad Hoc Arbitration","Institutional Arbitration"],["Section 37","Section 34"]],"documents":[{"t":"Master Services Agreement — v4","links":["Indemnity","Limitation of Liability","Arbitration Clause","Typed Artefact"]},{"t":"Kesavananda Bharati — Judgment","links":["Basic Structure","Judicial Review","Constitution Bench"]},{"t":"Board Resolution — Specimen","links":["Board Resolution","Director Duties","Cap Table"]},{"t":"Arbitral Award — Specimen","links":["Arbitral Award","Seat of Arbitration","Enforcement of Award"]},{"t":"Sale Deed — Specimen","links":["Sale Deed","Stamp Duty","Marketable Title"]},{"t":"Employment Contract — Redlined","links":["Notice Period","Non-Compete","Norm"]},{"t":"Mutual NDA — Standard Form","links":["Typed Artefact","Standard Form Contract","Boilerplate"]},{"t":"Section 65B Certificate","links":["Section 65B","Electronic Record","Affidavit"]},{"t":"Insolvency Petition — NCLT","links":["Section 9 Petition","NCLT","Operational Creditor"]},{"t":"Leave & Licence — Specimen","links":["Licence","Lease","Registration Act"]},{"t":"SLP Draft — Civil","links":["Special Leave Petition","Supreme Court","Limitation Act"]},{"t":"Due Diligence Report — Target Co","links":["Due Diligence","Related Party Transaction","Ferrock"]},{"t":"POSH Policy — Annexure C","links":["POSH Act","Internal Committee","Standing Orders"]},{"t":"Shareholders Agreement","links":["Shareholders Agreement","Drag Along","Tag Along"]},{"t":"Term Sheet — Annotated","links":["Term Sheet","Liquidation Preference","Simulation"]},{"t":"Charge Sheet — Extract","links":["Charge Sheet","Cognizable Offence","Cross Examination"]},{"t":"Vakalatnama","links":["Plaint","District Court"]},{"t":"Compliance Calendar — FY26","links":["Operation","Companies Act","Event Log"]},{"t":"Legal Notice — Reply","links":["Breach of Contract","Damages","Cascade"]},{"t":"Norm Pack — Export","links":["Jurisdiction Pack","Norm","The Ether"]},{"t":"Recovery Notice — Specimen","links":["Cascade","Financial Creditor","Execution"]},{"t":"Arbitration Terms of Reference","links":["Institutional Arbitration","Section 11","Venue"]}]}}</script>
+<script>
+(() => {
+'use strict';
+
+/* ============================================================
+   0. SHARED HELPERS
+   ============================================================ */
+const DATA      = JSON.parse(document.getElementById('corpus-data').textContent);
+const SPECIMENS = new Set(DATA.specimenSet);
+const REDUCED   = matchMedia('(prefers-reduced-motion: reduce)');
+const NARROW    = matchMedia('(max-width: 767px)');
+
+const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+const step  = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+
+const INK  = '32,29,36';    // body ink on paper
+const RED  = '150,44,36';   // redline / seal
+const BLUE = '44,58,116';   // signature ink
+
+/* The graph itself is drawn in --ds-ink-cool. */
+function inkCool() {
+  const hex = getComputedStyle(document.documentElement)
+    .getPropertyValue('--ds-ink-cool').trim().match(/^#([0-9a-f]{6})$/i);
+  if (!hex) return '46,48,58';
+  const n = parseInt(hex[1], 16);
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${255 & n}`;
+}
+
+const CAN_BLUR = (() => {
+  try { const c = document.createElement('canvas').getContext('2d'); c.filter = 'blur(2px)'; return c.filter === 'blur(2px)'; }
+  catch { return false; }
+})();
+
+/* ============================================================
+   1. COMPOSE — spine corpus + industry overlay
+   ============================================================ */
+function compose(industry) {
+  const overlay   = industry.overlay ? (DATA.overlays[industry.overlay] || null) : null;
+  const spineHubs = overlay?.spineHubs ?? DATA.baseDomains;
+  const base      = DATA.baseCorpus;
+
+  // (a) cut the shipped corpus down to the domains this industry stands on
+  const keep = new Set(spineHubs);
+  const spineClusters = base.clusters.filter(c => keep.has(c.hub));
+  const spineNames = new Set();
+  for (const c of spineClusters) { spineNames.add(c.hub); for (const i of c.items) spineNames.add(i); }
+  const inSpine = ([a, b]) => spineNames.has(a) && spineNames.has(b);
+
+  const spineDocs = base.documents
+    .filter(d => SPECIMENS.has(d.t))
+    .map(d => ({ ...d, links: d.links.filter(l => spineNames.has(l)) }))
+    .filter(d => d.links.length >= 2);
+
+  // (b) graft the overlay's own domains on top, dropping repeated names
+  const clusters = spineClusters.map(c => ({ hub: c.hub, items: c.items.slice() }));
+  const hubs  = new Set(clusters.map(c => c.hub));
+  const names = new Set(spineNames);
+
+  if (overlay) for (const hub of overlay.hubs) {
+    const items = DATA.extraDomains[hub];
+    if (!items || hubs.has(hub)) continue;
+    const kept = [];
+    for (const item of items) { if (names.has(item)) continue; names.add(item); kept.push(item); }
+    hubs.add(hub); names.add(hub);
+    clusters.push({ hub, items: kept });
+  }
+
+  // (c) an edge survives only if both of its ends are names in this world
+  const both = ([a, b]) => names.has(a) && names.has(b);
+  const documents = [];
+  for (const doc of [...spineDocs, ...(overlay?.documents ?? [])]) {
+    const links = doc.links.filter(l => names.has(l));
+    if (links.length < 2) continue;
+    documents.push({ t: doc.t, kind: doc.kind, links });
+  }
+
+  return {
+    clusters,
+    bridges:   [...base.bridges.filter(inSpine),   ...(overlay?.bridges   ?? [])].filter(both),
+    cross:     [...base.cross.filter(inSpine),     ...(overlay?.cross     ?? [])].filter(both),
+    contested: [...base.contested.filter(inSpine), ...(overlay?.contested ?? [])].filter(both),
+    documents,
+  };
+}
+
+/* ============================================================
+   2. PAPER — every specimen is a small drawn document
+   ============================================================ */
+const DOC_KIND = {
+  'Master Services Agreement — v4': 'contract', 'Kesavananda Bharati — Judgment': 'judgment',
+  'Board Resolution — Specimen': 'resolution', 'Arbitral Award — Specimen': 'award',
+  'Sale Deed — Specimen': 'deed', 'Employment Contract — Redlined': 'redline',
+  'Mutual NDA — Standard Form': 'contract', 'Section 65B Certificate': 'certificate',
+  'Insolvency Petition — NCLT': 'petition', 'Leave & Licence — Specimen': 'deed',
+  'SLP Draft — Civil': 'petition', 'Due Diligence Report — Target Co': 'report',
+  'POSH Policy — Annexure C': 'policy', 'Shareholders Agreement': 'contract',
+  'Term Sheet — Annotated': 'table', 'Charge Sheet — Extract': 'form',
+  'Vakalatnama': 'certificate', 'Compliance Calendar — FY26': 'table',
+  'Legal Notice — Reply': 'notice', 'Norm Pack — Export': 'table',
+  'Recovery Notice — Specimen': 'notice', 'Arbitration Terms of Reference': 'award',
+};
+const TONES = {
+  aged:  ['#D2C6A6', '#CEC1A0', '#D6CBAC', '#CBBE9B'],
+  worn:  ['#D8D1BE', '#D4CDBA', '#DBD4C2'],
+  crisp: ['#E6E2D6', '#E9E5DA', '#E3DED1'],
+};
+const TONE_OF = {
+  deed: 'aged', judgment: 'aged', petition: 'aged', award: 'aged', certificate: 'aged',
+  contract: 'worn', redline: 'worn', notice: 'worn', resolution: 'worn',
+  table: 'crisp', report: 'crisp', policy: 'crisp', form: 'crisp',
+};
+const BLUR_LEVELS = [0, 2.5, 6, 12, 22];
+
+function fnv1a(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return h >>> 0;
+}
+function mulberry(seed) {
+  let t = seed;
+  return () => {
+    t |= 0; t = (t + 0x6d2b79f5) | 0;
+    let e = Math.imul(t ^ (t >>> 15), 1 | t);
+    e = (e + Math.imul(e ^ (e >>> 7), 61 | e)) ^ e;
+    return ((e ^ (e >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const PAPER_CACHE = new Map();
+function paperFor(title, declaredKind) {
+  const cached = PAPER_CACHE.get(title);
+  if (cached) return cached;
+
+  const kind = declaredKind || DOC_KIND[title] || 'contract';
+  const rnd  = mulberry(fnv1a(title));
+  const W = 148, H = 204, M = 16, CW = W - 2 * M;
+
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const g = cv.getContext('2d');
+
+  const tone = TONES[TONE_OF[kind] || 'worn'];
+  g.fillStyle = tone[Math.floor(rnd() * tone.length)];
+  g.fillRect(0, 0, W, H);
+
+  const sheen = g.createLinearGradient(0, 0, 111, H);
+  sheen.addColorStop(0, 'rgba(255,252,243,.32)');
+  sheen.addColorStop(0.55, 'rgba(255,250,238,0)');
+  sheen.addColorStop(1, 'rgba(66,56,42,.16)');
+  g.fillStyle = sheen; g.fillRect(0, 0, W, H);
+
+  let y = M;                                            // the type cursor
+  const bar  = (x, yy, w, h, a) => { g.fillStyle = `rgba(${INK},${a})`; g.fillRect(x, yy, w, h); };
+  const rule = (yy, a = 0.36, x = M, w = CW) => bar(x, yy, w, 0.9, a);
+
+  const para = (lines, o = {}) => {                     // a block of body text
+    const lh = o.lh || 6.2, a = o.a || 0.6, x = o.x || M, w = o.w || CW;
+    for (let i = 0; i < lines; i++) {
+      const left = x + (o.indent && i === 0 ? w * 0.09 : 0);
+      let len = (w - (left - x)) * (0.86 + 0.14 * rnd());
+      if (i === lines - 1) len *= 0.45 + 0.32 * rnd();
+      bar(left, y + i * lh, len, 1.7, a * (0.72 + 0.42 * rnd()));
+    }
+    y += lines * lh;
+  };
+  const head = (frac, a = 0.6, h = 2.4) => {            // a centred title bar
+    bar(M + (CW - CW * frac) / 2, y, CW * frac, h, a); y += h + 4.5;
+  };
+  const letterhead = () => {
+    bar(M, y, CW * 0.34, 3.4, 0.76);
+    bar(M, (y += 7.5), CW * 0.55, 1.5, 0.4);
+    rule((y += 5.5), 0.45);
+    y += 9;
+  };
+  const seal = (x, yy, r, colour, rot) => {
+    g.save(); g.translate(x, yy); g.rotate(rot);
+    g.strokeStyle = `rgba(${colour},.52)`; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(0, 0, r, 0, 6.2832); g.stroke();
+    g.lineWidth = 0.8;
+    g.beginPath(); g.arc(0, 0, r * 0.7, 0, 6.2832); g.stroke();
+    g.fillStyle = `rgba(${colour},.40)`;
+    for (let i = 0; i < 3; i++) g.fillRect(-(r * 0.42), -3.5 + 3.2 * i, r * 0.84 * (0.6 + 0.4 * rnd()), 1.2);
+    g.restore();
+  };
+  const sign = (x, yy, w) => {                          // a signature and its rule
+    g.strokeStyle = `rgba(${BLUE},.62)`; g.lineWidth = 1.1;
+    g.beginPath(); g.moveTo(x, yy);
+    for (let i = 1; i <= 7; i++) g.lineTo(x + (w * i) / 7, yy - (8 * rnd() - 3.5));
+    g.stroke();
+    bar(x, yy + 4.5, w, 0.8, 0.34);
+  };
+  const caption = () => {                               // court-style cause title
+    y += 3;
+    head(0.74, 0.74, 2.9); head(0.46, 0.54, 2);
+    rule(y, 0.4); y += 7;
+    head(0.32, 0.5, 2);
+    bar(M, (y += 2), CW * 0.52, 2.1, 0.56); y += 7.5;
+    head(0.15, 0.46, 1.8);
+    bar(W - M - CW * 0.52, y, CW * 0.52, 2.1, 0.56);
+    rule((y += 9), 0.3); y += 8;
+  };
+  const clauses = (n) => {
+    for (let i = 0; i < n; i++) {
+      bar(M, y + 1, 5, 1.8, 0.62);
+      para(2 + Math.floor(2 * rnd()), { x: M + 9.5, w: CW - 9.5, a: 0.45 });
+      y += 3.5;
+    }
+  };
+
+  if (kind === 'deed') {
+    g.fillStyle = 'rgba(38,34,29,.88)'; g.fillRect(0, 0, W, 25);
+    g.fillStyle = 'rgba(238,232,218,.78)';
+    g.fillRect(11, 7, 46, 2.4); g.fillRect(11, 14, 62, 1.6);
+    g.strokeStyle = 'rgba(238,232,218,.55)'; g.lineWidth = 1;
+    g.beginPath(); g.arc(124, 12.5, 7.5, 0, 6.2832); g.stroke();
+    g.beginPath(); g.arc(124, 12.5, 4, 0, 6.2832); g.stroke();
+    g.strokeStyle = `rgba(${INK},.22)`; g.lineWidth = 0.7;
+    for (let i = 0; i < 3; i++) {
+      g.beginPath();
+      for (let x = 0; x <= W; x += 4) g.lineTo(x, 31 + 3.4 * i + 1.7 * Math.sin(0.28 * x + i));
+      g.stroke();
+    }
+    y = 46;
+    head(0.6, 0.72, 2.9); para(4); y += 5; para(5, { indent: true });
+    sign(M, 174, CW * 0.32); sign(M + CW * 0.56, 174, CW * 0.32);
+    seal(115, 142, 13, RED, -0.22);
+  } else if (kind === 'judgment') {
+    caption(); clauses(4);
+  } else if (kind === 'petition') {
+    caption(); clauses(3); rule(y, 0.3); y += 8; para(2, { w: CW * 0.55 });
+  } else if (kind === 'award') {
+    caption(); para(6); y += 6;
+    sign(M + CW * 0.52, 170, CW * 0.4); seal(M + 22, 160, 12.5, BLUE, 0.16);
+  } else if (kind === 'contract') {
+    y += 4; head(0.58, 0.76, 3.1); rule(y, 0.35); y += 8; clauses(3);
+    sign(M, 174, CW * 0.3); sign(M + CW * 0.58, 174, CW * 0.3);
+  } else if (kind === 'redline') {
+    y += 3; head(0.5, 0.7, 2.8);
+    for (let i = 0; i < 11; i++) {
+      const w = CW * (0.78 + 0.22 * rnd()), cut = rnd() < 0.32;
+      bar(M, y, w, 1.7, cut ? 0.28 : 0.48);
+      if (cut) {
+        g.fillStyle = `rgba(${RED},.78)`;
+        g.fillRect(M, y + 0.5, w, 0.9); g.fillRect(M - 7, y - 1.5, 1.7, 5);
+        g.fillStyle = `rgba(${RED},.58)`;
+        g.fillRect(M + w * 0.08, y + 3.4, w * (0.3 + 0.35 * rnd()), 1.5);
+        y += 4.2;
+      }
+      y += 6.2;
+    }
+  } else if (kind === 'resolution') {
+    letterhead(); para(3); y += 5; head(0.38, 0.56, 2.2); para(4, { indent: true });
+    sign(M + CW * 0.5, 172, CW * 0.4);
+  } else if (kind === 'certificate') {
+    y += 12; head(0.66, 0.8, 3.3); head(0.38, 0.5, 2); y += 6; para(5); y += 10;
+    g.strokeStyle = `rgba(${INK},.34)`; g.lineWidth = 0.9;
+    g.strokeRect(M, y, CW, 26);
+    para(2, { x: M + 4, w: CW - 8, a: 0.4 });
+    seal(74, 168, 15, BLUE, 0.1);
+  } else if (kind === 'table') {
+    letterhead();
+    const lh = 8.4, col = CW / 3;
+    for (let r = 0; r <= 9; r++) rule(y + r * lh, r < 2 ? 0.34 : 0.15);
+    for (let c = 1; c < 3; c++) bar(M + c * col, y, 0.7, 9 * lh, 0.16);
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 3; c++)
+      bar(M + c * col + 2.5, y + r * lh + 3.2, col * (0.32 + 0.44 * rnd()), 1.5, r === 0 ? 0.62 : 0.4);
+    y += 9 * lh + 6;
+  } else if (kind === 'policy') {
+    y += 4; head(0.54, 0.76, 3); y += 3;
+    for (let s = 0; s < 3; s++) {
+      bar(M, y, CW * (0.28 + 0.22 * rnd()), 2.7, 0.72); y += 8.5;
+      for (let i = 0; i < 2 + Math.floor(2 * rnd()); i++) {
+        g.fillStyle = `rgba(${INK},.5)`;
+        g.beginPath(); g.arc(M + 2.5, y + 1, 1.4, 0, 6.2832); g.fill();
+        bar(M + 8, y, CW * (0.6 + 0.3 * rnd()) - 8, 1.6, 0.44);
+        y += 6.6;
+      }
+      y += 4.5;
+    }
+  } else if (kind === 'form') {
+    letterhead();
+    const cw = CW / 2;
+    g.lineWidth = 0.8;
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 2; c++) {
+      const x = M + c * cw, yy = y + 17.5 * r;
+      g.strokeStyle = `rgba(${INK},.30)`; g.strokeRect(x, yy, cw, 17.5);
+      bar(x + 3, yy + 4.5, cw * 0.34, 1.4, 0.58);
+      bar(x + 3, yy + 10.5, cw * (0.38 + 0.42 * rnd()), 1.5, 0.38);
+    }
+    y += 93.5;
+  } else if (kind === 'notice') {
+    letterhead(); para(3); y += 5; para(6, { indent: true }); sign(M, 172, CW * 0.34);
+  } else {                                              // report — a little bar chart
+    letterhead(); para(2); y += 5;
+    const cw = CW / 6;
+    for (let i = 0; i < 6; i++) {
+      const h = 9 + 25 * rnd();
+      g.fillStyle = `rgba(${INK},${0.26 + 0.32 * rnd()})`;
+      g.fillRect(M + i * cw + 2, y + 36 - h, cw - 5, h);
+    }
+    rule(y + 36, 0.42); y += 45; para(5);
+  }
+
+  // punch holes, grain, corner shading, edge
+  g.fillStyle = 'rgba(40,34,26,.20)';
+  g.beginPath(); g.arc(7, 73.44, 2.6, 0, 6.2832); g.fill();
+  g.beginPath(); g.arc(7, 130.56, 2.6, 0, 6.2832); g.fill();
+
+  const img = g.getImageData(0, 0, W, H), px = img.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const n = (rnd() - 0.5) * 15;
+    px[i] += n; px[i + 1] += n; px[i + 2] += n;
+  }
+  g.putImageData(img, 0, 0);
+
+  const shade = g.createRadialGradient(66.6, 85.68, 61.2, 74, 102, 159.12);
+  shade.addColorStop(0, 'rgba(0,0,0,0)');
+  shade.addColorStop(1, 'rgba(28,22,14,.26)');
+  g.fillStyle = shade; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(52,44,32,.42)'; g.lineWidth = 1;
+  g.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+  // pre-blurred copies, so depth of field is a lookup rather than a filter
+  const levels = [cv];
+  for (const b of BLUR_LEVELS.slice(1)) {
+    const c2 = document.createElement('canvas');
+    c2.width = W; c2.height = H;
+    const g2 = c2.getContext('2d');
+    try { g2.filter = `blur(${b}px)`; } catch {}
+    g2.drawImage(cv, 0, 0);
+    levels.push(c2);
+  }
+  levels.baseW = W;
+  PAPER_CACHE.set(title, levels);
+  return levels;
+}
+
+/* ============================================================
+   3. NOISE — the blobs are circles pushed around by 3D perlin
+   ============================================================ */
+const PERM = new Uint8Array(512);
+{
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+  let s = 1337;
+  const r = () => (s = (1103515245 * s + 12345) & 0x7fffffff) / 0x7fffffff;
+  for (let i = 255; i > 0; i--) { const j = (r() * (i + 1)) | 0; const t = p[i]; p[i] = p[j]; p[j] = t; }
+  for (let i = 0; i < 512; i++) PERM[i] = p[i & 255];
+}
+const fade = (t) => t * t * t * (t * (6 * t - 15) + 10);
+function grad(h, x, y, z) {
+  switch (h & 15) {
+    case 0: return x + y;   case 1: return -x + y;  case 2: return x - y;   case 3: return -x - y;
+    case 4: return x + z;   case 5: return -x + z;  case 6: return x - z;   case 7: return -x - z;
+    case 8: return y + z;   case 9: case 13: return -y + z;
+    case 10: return y - z;  case 12: return y + x;  case 14: return y - x;
+    default: return -y - z;
+  }
+}
+function noise3(x, y, z) {
+  const X = 255 & Math.floor(x), Y = 255 & Math.floor(y), Z = 255 & Math.floor(z);
+  x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+  const u = fade(x), v = fade(y), w = fade(z);
+  const A = PERM[X] + Y, AA = PERM[A] + Z, AB = PERM[A + 1] + Z;
+  const B = PERM[X + 1] + Y, BA = PERM[B] + Z, BB = PERM[B + 1] + Z;
+  const mix = (t, a, b) => a + t * (b - a);
+  return mix(w,
+    mix(v, mix(u, grad(PERM[AA], x, y, z),     grad(PERM[BA], x - 1, y, z)),
+           mix(u, grad(PERM[AB], x, y - 1, z), grad(PERM[BB], x - 1, y - 1, z))),
+    mix(v, mix(u, grad(PERM[AA + 1], x, y, z - 1),     grad(PERM[BA + 1], x - 1, y, z - 1)),
+           mix(u, grad(PERM[AB + 1], x, y - 1, z - 1), grad(PERM[BB + 1], x - 1, y - 1, z - 1))));
+}
+
+/* ============================================================
+   4. THE WORLD — layout, camera, draw loop
+   ============================================================ */
+const P = {
+  fov: 46, dist: 2.05, spin: 0.13,
+  aperture: 1, focalPlane: 0,
+  nodeSize: 2.05, hubSize: 1.5, docSize: 1, depthSize: 2,
+  blob: true, blobAmp: 0.34, blobAmpLit: 0.56, blobLobes: 1.95, blobSpeed: 0.3, blobMin: 1.5,
+  sheen: 0.55,
+  labels: true, labelSize: 1.06, labelWindow: 0.82, labelDensity: 0.2, labelDensityMul: 1, docLabels: true,
+  edgeAlpha: 0.62, edgeWidth: 0.7,
+  repel: 8200, link: 128, gravity: 1.7, drift: 5.5,
+  spreadX: 1.32, spreadY: 1.32, spreadZ: 1.32,
+};
+const BLOB_SEG = 26;
+
+function mountWorld(host, corpus, opts = {}) {
+  const par = { ...P, ...(opts.params || {}) };
+  const ink = inkCool();
+  let reduced = REDUCED.matches;
+
+  /* ---- 4a. build nodes and edges ------------------------- */
+  const nodes = [], edges = [], byName = new Map();
+  let seed = 0x13527dc;
+  const rnd = () => (seed = (1103515245 * seed + 12345) & 0x7fffffff) / 0x7fffffff;
+
+  function node(name, kind) {
+    let n = byName.get(name);
+    if (n) return n;
+    const u = 2 * rnd() - 1, th = 6.2832 * rnd(), r = 420 * Math.cbrt(rnd()), s = Math.sqrt(1 - u * u);
+    n = {
+      id: nodes.length, name, kind, cluster: null,
+      x: r * s * Math.cos(th), y: r * s * Math.sin(th), z: r * u,
+      vx: 0, vy: 0, vz: 0,
+      mass: kind === 'hub' ? 4.2 : kind === 'doc' ? 3.4 : 1,
+      deg: 0, adj: [], inc: [],
+      ph: 6.2832 * rnd(), sp: 0.24 + 0.5 * rnd(), bseed: 40 * rnd(),
+      a01: 0, px: 0, py: 0, s: 1, depth: 0, vis: false, rank: 1, sizeMul: 1,
+    };
+    nodes.push(n); byName.set(name, n);
+    return n;
+  }
+  function link(a, b, kind) {
+    if (!a || !b || a === b) return;
+    const e = { a, b, kind: kind || 'rel' };
+    edges.push(e);
+    a.deg++; b.deg++; a.adj.push(b); b.adj.push(a); a.inc.push(e); b.inc.push(e);
+  }
+  const at = (name) => byName.get(name);
+
+  for (const c of corpus.clusters) {
+    const hub = node(c.hub, 'hub'); hub.cluster = c.hub;
+    const seen = [];
+    for (const item of c.items) {
+      const n = node(item, 'concept'); n.cluster = c.hub;
+      // most concepts hang off the domain; some chain off a sibling instead
+      if (seen.length > 2 && rnd() < 0.46) link(seen[Math.floor(rnd() * seen.length)], n, 'rel');
+      else link(hub, n, 'rel');
+      seen.push(n);
+    }
+    const extra = Math.floor(0.34 * seen.length);
+    for (let i = 0; i < extra; i++)
+      link(seen[Math.floor(rnd() * seen.length)], seen[Math.floor(rnd() * seen.length)], 'rel');
+  }
+  for (const [a, b] of corpus.bridges)   link(at(a), at(b), 'spine');
+  for (const [a, b] of corpus.cross)     link(at(a) || node(a, 'concept'), at(b) || node(b, 'concept'), 'rel');
+  for (const [a, b] of corpus.contested) link(at(a), at(b), 'contested');
+  for (const doc of corpus.documents) {
+    const d = node(doc.t, 'doc');
+    for (const l of doc.links) link(d, at(l) || node(l, 'concept'), 'doc');
+  }
+
+  for (const n of nodes) if (n.kind === 'doc') n.img = paperFor(n.name, corpus.documents.find(d => d.t === n.name)?.kind);
+
+  // size and label priority follow degree
+  {
+    let top = 1;
+    for (const n of nodes) if (n.kind !== 'hub' && n.deg > top) top = n.deg;
+    for (const n of nodes) {
+      const d = Math.pow(Math.min(1, n.deg / top), 0.65), jitter = 0.78 + 0.62 * rnd();
+      n.sizeMul = n.kind === 'hub' ? 0.92 + 0.3 * d : (0.52 + 1.05 * d) * jitter;
+    }
+    const weight = (n) => (n.kind === 'hub' ? 1000 : n.kind === 'doc' ? 500 : 0) + n.deg;
+    const order = nodes.slice().sort((a, b) => weight(b) - weight(a));
+    order.forEach((n, i) => { n.rank = i / Math.max(1, order.length - 1); });
+  }
+
+  /* ---- 4b. settle the layout ----------------------------- */
+  const restOf = (e) => e.kind === 'spine' ? 3.95 * par.link : e.kind === 'doc' ? 1.42 * par.link : par.link;
+  const stiffOf = (e) => e.kind === 'spine' ? 0.01 : e.kind === 'doc' ? 0.03 : 0.026;
+
+  function relax(dt) {
+    const n = nodes.length, pull = 0.001 * par.gravity;
+    for (let i = 0; i < n; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < n; j++) {
+        const b = nodes[j];
+        let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+        let d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 > 211600) continue;                     // ignore anything far away
+        if (d2 < 0.01) { dx = rnd() - 0.5; dy = rnd() - 0.5; dz = rnd() - 0.5; d2 = 0.01; }
+        const d = Math.sqrt(d2), f = (par.repel * a.mass * b.mass) / (d2 * d);
+        a.vx -= dx * f; a.vy -= dy * f; a.vz -= dz * f;
+        b.vx += dx * f; b.vy += dy * f; b.vz += dz * f;
+      }
+    }
+    for (const e of edges) {
+      const dx = e.b.x - e.a.x, dy = e.b.y - e.a.y, dz = e.b.z - e.a.z;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.01;
+      const f = ((d - restOf(e)) * stiffOf(e)) / d;
+      const ia = 1 / e.a.mass, ib = 1 / e.b.mass;
+      e.a.vx += dx * f * ia; e.a.vy += dy * f * ia; e.a.vz += dz * f * ia;
+      e.b.vx -= dx * f * ib; e.b.vy -= dy * f * ib; e.b.vz -= dz * f * ib;
+    }
+    for (const n2 of nodes) {
+      n2.vx -= n2.x * pull; n2.vy -= n2.y * pull; n2.vz -= n2.z * pull;
+      n2.x += n2.vx * dt; n2.y += n2.vy * dt; n2.z += n2.vz * dt;
+      n2.vx *= 0.8; n2.vy *= 0.8; n2.vz *= 0.8;
+    }
+  }
+  let RADIUS = 600;   // settled extent, unscaled — sets how far the camera sits
+  let EXTENT = 600;   // live extent, spread-scaled — sets the depth-of-field bands
+  function recentre() {
+    let cx = 0, cy = 0, cz = 0;
+    for (const n of nodes) { cx += n.x; cy += n.y; cz += n.z; }
+    cx /= nodes.length; cy /= nodes.length; cz /= nodes.length;
+    let far = 0;
+    for (const n of nodes) {
+      n.x -= cx; n.y -= cy; n.z -= cz;
+      const d2 = n.x * n.x + n.y * n.y + n.z * n.z;
+      if (d2 > far) far = d2;
+    }
+    RADIUS = Math.max(120, Math.sqrt(far));
+  }
+  { let dt = 1; for (let i = 0; i < 460; i++) { relax(dt); dt *= 0.991; } recentre(); }
+
+  /* ---- 4c. canvas ---------------------------------------- */
+  const stage = document.createElement('div'); stage.className = 'corpus__stage';
+  const canvas = document.createElement('canvas'); canvas.className = 'corpus__canvas';
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', opts.label || 'A world drawn as a connected graph.');
+  const vig = document.createElement('div'); vig.className = 'corpus__vig';
+  stage.append(canvas, vig); host.append(stage);
+
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.min(2, devicePixelRatio || 1);
+  let VW = 0, VH = 0, focal = 0;
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    VW = Math.max(1, r.width); VH = Math.max(1, r.height);
+    canvas.width = Math.round(VW * DPR); canvas.height = Math.round(VH * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  resize();
+  const ro = new ResizeObserver(resize); ro.observe(stage);
+
+  // eight pre-blurred discs stand in for out-of-focus nodes
+  const DISCS = (() => {
+    const size = 208, out = [];
+    for (let i = 0; i < 8; i++) {
+      const c = document.createElement('canvas'); c.width = c.height = size;
+      const g = c.getContext('2d');
+      try { g.filter = `blur(${(40 * (i / 7) * 0.42).toFixed(2)}px)`; } catch {}
+      g.fillStyle = `rgb(${ink})`;
+      g.beginPath(); g.arc(size / 2, size / 2, 40, 0, 6.2832); g.fill();
+      out.push(c);
+    }
+    return out;
+  })();
+
+  /* ---- 4d. camera ---------------------------------------- */
+  const cam = { yaw: 0, pitch: 0, vYaw: 0, vPitch: 0, tx: 0, ty: 0, tz: 0, dist: RADIUS * par.dist * 1.55, node: null };
+  let blobT = 0, intro = 0;
+  let hovered = null, focused = null, lookAt = null;
+  const lit = new Set(), litEdges = new Set();
+
+  function relight() {
+    lit.clear(); litEdges.clear();
+    const n = hovered || focused;
+    if (!n) return;
+    lit.add(n);
+    for (const e of n.inc) { litEdges.add(e); lit.add(e.a === n ? e.b : e.a); }
+  }
+  const worldPos = (n) => ({ x: n.x * par.spreadX, y: n.y * par.spreadY, z: n.z * par.spreadZ });
+
+  function trace(n) {
+    focused = n || null;
+    cam.node = focused;
+    if (focused) {
+      // sit between the node and the middle of everything it touches
+      const p = worldPos(focused);
+      let sx = 0, sy = 0, sz = 0, k = 0;
+      for (const e of focused.inc) { const o = worldPos(e.a === focused ? e.b : e.a); sx += o.x; sy += o.y; sz += o.z; k++; }
+      lookAt = k ? { x: (p.x + sx / k) / 2, y: (p.y + sy / k) / 2, z: (p.z + sz / k) / 2 } : p;
+      par.dist = Math.min(par.dist, 1.5);
+    } else {
+      lookAt = null;
+      par.dist = P.dist;
+    }
+    relight();
+    opts.onFocus?.(focused);
+  }
+
+  /* ---- 4e. project --------------------------------------- */
+  function project(t) {
+    focal = (0.5 * VH) / Math.tan((par.fov * Math.PI) / 360);
+    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+    const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+    const drift = reduced ? 0 : par.drift;
+    let far = 0;
+    for (const n of nodes) {
+      n.a01 += (1 - n.a01) * 0.055;
+      if (n.a01 < 0.012) { n.vis = false; continue; }
+      const wx = n.x * par.spreadX, wy = n.y * par.spreadY, wz = n.z * par.spreadZ;
+      const d2 = wx * wx + wy * wy + wz * wz; if (d2 > far) far = d2;
+      const x = wx + Math.sin(t * n.sp + n.ph) * drift - cam.tx;
+      const y = wy + Math.cos(t * n.sp * 0.83 + n.ph) * drift - cam.ty;
+      const z = wz + Math.sin(t * n.sp * 0.67 + 1.7 * n.ph) * drift - cam.tz;
+      const rx = x * cy + z * sy;
+      const rz = -x * sy + z * cy;
+      const ry = y * cp - rz * sp;
+      const depth = cam.dist - (y * sp + rz * cp);
+      n.depth = depth;
+      if (depth < 40) { n.vis = false; continue; }
+      const k = focal / depth;
+      n.px = rx * k + 0.5 * VW;
+      n.py = -ry * k + 0.5 * VH;
+      n.s = k;
+      n.vis = true;
+    }
+    EXTENT = Math.max(120, Math.sqrt(far));
+  }
+
+  /* ---- 4f. blob path ------------------------------------- */
+  const bx = new Float32Array(BLOB_SEG), by = new Float32Array(BLOB_SEG);
+  function blob(g, cx, cy, r, sd, t, amp) {
+    let peak = 0;
+    for (let i = 0; i < BLOB_SEG; i++) {
+      const a = (i / BLOB_SEG) * 6.2831853, c = Math.cos(a), s = Math.sin(a);
+      const n = noise3(c * par.blobLobes + sd, s * par.blobLobes + 0.7 * sd, t);
+      if (n > peak) peak = n;
+      const rr = r * (1 + amp * n);
+      bx[i] = cx + c * rr; by[i] = cy + s * rr;
+    }
+    g.beginPath();
+    g.moveTo((bx[BLOB_SEG - 1] + bx[0]) / 2, (by[BLOB_SEG - 1] + by[0]) / 2);
+    for (let i = 0; i < BLOB_SEG; i++) {
+      const j = (i + 1) % BLOB_SEG;
+      g.quadraticCurveTo(bx[i], by[i], (bx[i] + bx[j]) / 2, (by[i] + by[j]) / 2);
+    }
+    g.closePath();
+    return peak;
+  }
+
+  /* ---- 4g. draw ------------------------------------------ */
+  const order = nodes.slice();
+  const buckets = []; for (let i = 0; i < 21; i++) buckets.push([]);
+  const sheenCache = new Map();
+  const shortCache = new Map();
+  const upper = (s) => s.toUpperCase();
+  const docLabel = (s) => upper(s.split(' — ')[0].trim());
+
+  function draw(now) {
+    ctx.clearRect(0, 0, VW, VH);
+    blobT = reduced ? 4.2 : now * 0.001 * par.blobSpeed * 2;
+
+    const tracing = lit.size > 0;
+    const near = cam.dist - EXTENT, span = 2 * EXTENT || 1;
+    const plane = cam.dist + par.focalPlane * EXTENT;
+    const norm = (d) => clamp((d - near) / span, 0, 1);
+    const ap = par.aperture * cam.dist * 0.012;
+    const blurAt = (d) => Math.min((ap * focal * Math.abs(d - plane)) / Math.max(d * plane, 1e-6), 44);
+
+    /* edges, bucketed by depth so near ones read darker */
+    for (const b of buckets) b.length = 0;
+    for (const e of edges) {
+      if (!e.a.vis || !e.b.vis || (tracing && litEdges.has(e))) continue;
+      const band = Math.min(6, (7 * norm((e.a.depth + e.b.depth) * 0.5)) | 0);
+      buckets[(e.kind === 'contested' ? 1 : 0) * 7 + band].push(e);
+    }
+    for (let kind = 0; kind < 2; kind++) for (let band = 0; band < 7; band++) {
+      const list = buckets[7 * kind + band];
+      if (!list.length) continue;
+      const s = (band + 0.5) / 7;
+      let a = ((1 - Math.pow(s, 1.25)) * 0.36 + 0.012) * par.edgeAlpha;
+      if (tracing) a *= 0.3;
+      const w = par.edgeWidth + 0.6 * blurAt(near + s * span);
+      a *= par.edgeWidth / w;
+      if (a <= 0.002) continue;
+      ctx.beginPath();
+      for (const e of list) { ctx.moveTo(e.a.px, e.a.py); ctx.lineTo(e.b.px, e.b.py); }
+      ctx.strokeStyle = kind === 1 ? `rgba(150,38,32,${1.5 * a})` : `rgba(${ink},${a})`;
+      ctx.lineWidth = w;
+      ctx.stroke();
+    }
+    if (tracing) for (let kind = 0; kind < 2; kind++) {
+      ctx.beginPath();
+      let any = false;
+      for (const e of litEdges) {
+        if (!e.a.vis || !e.b.vis) continue;
+        if ((e.kind === 'contested' ? 1 : 0) !== kind) continue;
+        ctx.moveTo(e.a.px, e.a.py); ctx.lineTo(e.b.px, e.b.py); any = true;
+      }
+      if (!any) continue;
+      ctx.strokeStyle = kind === 1 ? 'rgba(176,52,42,.92)' : `rgba(${ink},.72)`;
+      ctx.lineWidth = par.edgeWidth + 0.4;
+      ctx.stroke();
+    }
+
+    /* nodes, back to front */
+    order.sort((a, b) => b.depth - a.depth);
+    ctx.textBaseline = 'middle';
+    const captions = [];
+
+    for (const n of order) {
+      if (!n.vis) continue;
+      const on = tracing && lit.has(n);
+      const blur = on ? 0 : blurAt(n.depth);
+      let alpha = tracing ? (on ? 1 : 0.34) : 1;
+      alpha *= n.a01;
+      if (alpha < 0.02) continue;
+
+      if (n.kind === 'doc') {
+        const w = 68 * par.docSize * n.s, h = 94 * par.docSize * n.s;
+        if (n.px < -w || n.px > VW + w || n.py < -h || n.py > VH + h) continue;
+        const scale = w / n.img.baseW;
+        let lvl = 0;
+        while (lvl + 1 < n.img.length && BLUR_LEVELS[lvl + 1] * scale < 0.5 * blur) lvl++;
+        // punch the paper out first so edges behind it do not show through
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = '#000';
+        ctx.fillRect(n.px - w / 2, n.py - h / 2, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = alpha;
+        ctx.drawImage(n.img[lvl], n.px - w / 2, n.py - h / 2, w, h);
+        ctx.globalAlpha = 1;
+        const crisp = clamp(1 - blur / 6, 0, 1);
+        if (crisp > 0.02) {
+          ctx.strokeStyle = `rgba(${ink},${alpha * (0.3 + 0.45 * crisp) * crisp})`;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(n.px - w / 2 + 0.5, n.py - h / 2 + 0.5, w - 1, h - 1);
+        }
+        if (!par.labels || !par.docLabels) continue;
+        const show = on ? 1 : clamp((par.labelDensity * par.labelDensityMul - n.rank) / 0.05, 0, 1);
+        if (show <= 0) continue;
+        const fs = clamp(11.6 * par.labelSize * Math.pow(cam.dist / n.depth, 0.6), 9.5, 18);
+        const a = (on ? 1 : alpha * (1 - step(0.7 * par.labelWindow, 2.4 * par.labelWindow, blur))) * show;
+        if (a <= 0.06) continue;
+        ctx.font = `400 ${fs.toFixed(1)}px ${MONO}`;
+        ctx.letterSpacing = '0.055em';
+        captions.push({ t: ellipsis(docLabel(n.name), 4.6 * w), x: n.px, y: n.py + h / 2 + 1.05 * fs, fs, w: 400, a: 0.94 * a, align: 'center' });
+        continue;
+      }
+
+      const grow = Math.pow(clamp(cam.dist / n.depth, 0.3, 2.6), par.depthSize - 1);
+      const r = Math.max(0.8, (n.kind === 'hub' ? 9.5 * par.hubSize : 5.2 * par.nodeSize) * n.sizeMul * grow * n.s);
+      const spread = 0.5 * blur;
+      const reach = Math.sqrt(r * r + spread * spread);
+      const edgeFade = clamp((0.62 * VH - reach) / (0.32 * VH), 0, 1);
+      if (edgeFade <= 0.01) continue;
+      alpha *= edgeFade;
+      const pad = 60 + reach;
+      if (n.px < -pad || n.px > VW + pad || n.py < -pad || n.py > VH + pad) continue;
+
+      const sharp = clamp(1 - spread / Math.max(1.1 * r, 0.75), 0, 1);
+      if (par.blob && r >= par.blobMin && sharp > 0.02) {
+        const amp = (on ? par.blobAmpLit : par.blobAmp) * sharp;
+        const peak = blob(ctx, n.px, n.py, r, n.bseed, blobT, amp);
+        if (r > 3.2 && par.sheen > 0) {
+          const s = clamp(peak, 0, 1) * par.sheen * sharp * 0.7;
+          const key = Math.round(64 * clamp(s, 0, 1));
+          let tint = sheenCache.get(key);
+          if (tint === undefined) {
+            const f = key / 64;
+            tint = ink.split(',').map(Number).map(v => Math.round(v + (255 - v) * f)).join(',');
+            sheenCache.set(key, tint);
+          }
+          const gr = ctx.createRadialGradient(n.px - 0.34 * r, n.py - 0.38 * r, 0.06 * r, n.px, n.py, 1.25 * r);
+          gr.addColorStop(0, `rgba(${tint},${alpha})`);
+          gr.addColorStop(1, `rgba(${ink},${alpha})`);
+          ctx.fillStyle = gr;
+        } else ctx.fillStyle = `rgba(${ink},${alpha})`;
+        ctx.fill();
+      } else {
+        const lvl = Math.min(7, Math.round((spread / reach) * 7)), size = 2.6 * reach;
+        ctx.globalAlpha = (r / reach) * (r / reach) * alpha;
+        ctx.drawImage(DISCS[lvl], n.px - size, n.py - size, 2 * size, 2 * size);
+        ctx.globalAlpha = 1;
+      }
+
+      if (!par.labels) continue;
+      const show = on ? 1 : clamp((par.labelDensity * par.labelDensityMul - n.rank) / 0.05, 0, 1);
+      if (show <= 0) continue;
+      const fs = clamp((n.kind === 'hub' ? 14.5 : 11.6) * par.labelSize * Math.pow(cam.dist / n.depth, 0.6), 9.5, 20);
+      const byDepth = 1 - step(0.2 * par.labelWindow, (n.kind === 'hub' ? 0.92 : 0.72) * par.labelWindow, norm(n.depth));
+      const byBlur  = 1 - step(par.labelWindow, (n.kind === 'hub' ? 6 : 4) * par.labelWindow, blur);
+      const a = (on ? 1 : alpha * Math.min(byDepth, byBlur) * (n.kind === 'hub' ? 1 : 0.9)) * show;
+      if (a <= 0.06) continue;
+      ctx.font = `${n.kind === 'hub' || on ? 500 : 400} ${fs.toFixed(1)}px ${MONO}`;
+      ctx.letterSpacing = '0.055em';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = `rgba(${ink},${a})`;
+      ctx.fillText(upper(n.name), n.px + r + 6, n.py + 0.5);
+    }
+
+    ctx.letterSpacing = '0.055em';
+    for (const c of captions) {
+      ctx.font = `${c.w} ${c.fs.toFixed(1)}px ${MONO}`;
+      ctx.textAlign = c.align;
+      ctx.fillStyle = `rgba(${ink},${c.a})`;
+      ctx.fillText(c.t, c.x, c.y);
+    }
+    ctx.textAlign = 'left';
+  }
+
+  const MONO = getComputedStyle(document.documentElement).getPropertyValue('--ds-font-mono').trim() || 'ui-monospace, monospace';
+  function ellipsis(text, max) {
+    const key = text + '|' + (max | 0);
+    const hit = shortCache.get(key);
+    if (hit !== undefined) return hit;
+    let out = text;
+    if (ctx.measureText(text).width > max) {
+      let lo = 1, hi = text.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (ctx.measureText(text.slice(0, mid) + '…').width <= max) lo = mid + 1; else hi = mid;
+      }
+      out = text.slice(0, Math.max(1, lo - 1)).trimEnd() + '…';
+    }
+    shortCache.set(key, out);
+    return out;
+  }
+
+  /* ---- 4h. loop ------------------------------------------ */
+  let last = performance.now(), raf = 0, dead = false, ready = false;
+  function frame(now) {
+    if (dead) return;
+    const dt = Math.min(64, now - last); last = now;
+
+    cam.yaw += (reduced ? 0 : 0.001 * par.spin) * dt + cam.vYaw;
+    cam.pitch = clamp(cam.pitch + cam.vPitch, -1.15, 1.15);
+    const damp = Math.pow(0.9, dt / 16.7);
+    cam.vYaw *= damp; cam.vPitch *= damp;
+
+    const ease = 1 - Math.exp(-dt / 190);
+    const look = lookAt || { x: 0, y: 0, z: 0 };
+    cam.tx += (look.x - cam.tx) * ease;
+    cam.ty += (look.y - cam.ty) * ease;
+    cam.tz += (look.z - cam.tz) * ease;
+
+    let want = RADIUS * par.dist;
+    if (intro < 1) { intro = Math.min(1, intro + dt / 1500); want *= 1 + 0.55 * Math.pow(1 - intro, 3); }
+    cam.dist += (want - cam.dist) * ease;
+
+    project(now * 0.001);
+    draw(now);
+    if (!ready) { ready = true; opts.onReady?.(); }
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+
+  /* ---- 4i. pointer --------------------------------------- */
+  function pick(x, y) {
+    let hit = null, best = Infinity;
+    for (const n of nodes) {
+      if (!n.vis) continue;
+      if (n.kind === 'doc') {
+        const w = (68 * par.docSize * n.s) / 2, h = (94 * par.docSize * n.s) / 2;
+        if (x >= n.px - w && x <= n.px + w && y >= n.py - h && y <= n.py + h && n.depth < best) { best = n.depth; hit = n; }
+        continue;
+      }
+      const r = Math.max(9, (n.kind === 'hub' ? 9.5 * par.hubSize : 5.2 * par.nodeSize) * n.s + 7);
+      if (Math.abs(x - n.px) > r || Math.abs(y - n.py) > r) continue;
+      if (n.depth < best) { best = n.depth; hit = n; }
+    }
+    return hit;
+  }
+
+  let dragging = false, moved = false, lastPt = { x: 0, y: 0 };
+  if (opts.interactive !== false) {
+    canvas.addEventListener('pointerdown', (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      dragging = true; moved = false;
+      lastPt = { x: e.clientX, y: e.clientY };
+      canvas.classList.add('grabbing');
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (dragging) {
+        const dx = e.clientX - lastPt.x, dy = e.clientY - lastPt.y;
+        if (Math.abs(dx) + Math.abs(dy) > 2) moved = true;
+        cam.vYaw += 0.0006 * dx;
+        cam.vPitch += 0.00052 * dy;
+        lastPt = { x: e.clientX, y: e.clientY };
+        return;
+      }
+      const n = pick(e.offsetX, e.offsetY);
+      if (n !== hovered) {
+        hovered = n;
+        canvas.classList.toggle('pointing', !!n);
+        relight();
+        opts.onHover?.(hovered);
+      }
+    });
+    canvas.addEventListener('pointerup', (e) => {
+      if (!dragging) return;
+      dragging = false;
+      canvas.classList.remove('grabbing');
+      if (moved) return;
+      const n = pick(e.offsetX, e.offsetY);
+      trace(n && n === focused ? null : n);
+    });
+    canvas.addEventListener('pointercancel', () => { dragging = false; canvas.classList.remove('grabbing'); });
+    canvas.addEventListener('pointerleave', () => {
+      if (hovered) { hovered = null; canvas.classList.remove('pointing'); relight(); opts.onHover?.(null); }
+    });
+    canvas.addEventListener('dblclick', () => trace(null));
+  }
+
+  const onMotion = () => { reduced = REDUCED.matches; };
+  REDUCED.addEventListener('change', onMotion);
+
+  /* ---- 4j. api ------------------------------------------- */
+  return {
+    get focus() { return focused; },
+    get dist() { return par.dist; },
+    trace(name) { const n = byName.get(name); if (!n) return false; trace(n); return true; },
+    release() { trace(null); },
+    nudge(dy, dp) { cam.vYaw += dy; cam.vPitch += dp; },
+    zoom(f) { par.dist = clamp(par.dist * f, 0.7, 4.2); return par.dist; },
+    describe(n) {
+      const touches = [];
+      const seen = new Set();
+      for (const e of n.inc) {
+        const other = e.a === n ? e.b : e.a;
+        if (seen.has(other.name)) continue;
+        seen.add(other.name);
+        touches.push({ name: other.name, contested: e.kind === 'contested', spine: e.kind === 'spine' });
+      }
+      touches.sort((a, b) => (b.contested - a.contested) || (b.spine - a.spine));
+      return { name: n.name, kind: n.kind, domain: n.cluster, touches };
+    },
+    node(name) { return byName.get(name) || null; },
+    dispose() {
+      dead = true;
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      REDUCED.removeEventListener('change', onMotion);
+      stage.remove();
+    },
+  };
+}
+
+/* ============================================================
+   5. PANELS
+   ============================================================ */
+const CHEVRON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false" class="index__chevron"><path d="M12.9619 7.69125C12.924 7.78262 12.86 7.86072 12.7778 7.91568C12.6956 7.97064 12.5989 7.99998 12.5 8H3.5C3.40105 8.00008 3.30431 7.9708 3.22201 7.91586C3.13971 7.86092 3.07556 7.78281 3.03769 7.6914C2.99981 7.59998 2.98991 7.49939 3.00924 7.40235C3.02856 7.3053 3.07624 7.21618 3.14625 7.14625L7.64625 2.64625C7.69269 2.59976 7.74783 2.56288 7.80853 2.53772C7.86923 2.51256 7.93429 2.49961 8 2.49961C8.06571 2.49961 8.13077 2.51256 8.19147 2.53772C8.25217 2.56288 8.30731 2.59976 8.35375 2.64625L12.8538 7.14625C12.9237 7.21621 12.9712 7.30534 12.9905 7.40235C13.0097 7.49936 12.9998 7.5999 12.9619 7.69125Z"></path></svg>';
+const KIND_LABEL = { hub: 'Domain', concept: 'Concept', doc: 'Specimen document' };
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+const indexEl   = document.getElementById('index');
+const readoutEl = document.getElementById('readout');
+const statusEl  = document.getElementById('model-status');
+
+const openDomains = new Map();   // hub -> explicitly opened/folded by the reader
+
+function renderIndex(corpus, traced, onTrace, onRelease) {
+  indexEl.textContent = '';
+  const title = document.createElement('p');
+  title.className = 'index__title'; title.textContent = 'Index';
+  indexEl.append(title);
+
+  if (!corpus) {
+    const empty = document.createElement('p');
+    empty.className = 'index__empty'; empty.textContent = 'The world is being built.';
+    indexEl.append(empty);
+    return;
+  }
+
+  const item = (name, label, extra, count) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'index__item' + (extra ? ' ' + extra : '');
+    const current = traced === name;
+    if (current) b.setAttribute('aria-current', 'true');
+    b.append(document.createTextNode(label));
+    if (count !== undefined) {
+      const c = document.createElement('span');
+      c.className = 'index__count'; c.textContent = `(${count})`;
+      b.append(c);
+    }
+    b.addEventListener('click', () => (current ? onRelease() : onTrace(name)));
+    return b;
+  };
+
+  const domainsHead = document.createElement('p');
+  domainsHead.className = 'index__group'; domainsHead.id = 'index-domains';
+  domainsHead.textContent = 'Domains';
+  const domains = document.createElement('ul');
+  domains.className = 'index__list';
+  domains.setAttribute('aria-labelledby', 'index-domains');
+
+  for (const c of corpus.clusters) {
+    const auto = traced !== null && (traced === c.hub || c.items.includes(traced));
+    const open = openDomains.get(c.hub) ?? auto;
+    const listId = `index-${slug(c.hub)}`;
+
+    const li = document.createElement('li');
+    li.className = 'index__domain';
+
+    const row = document.createElement('div');
+    row.className = 'index__row';
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'index__toggle';
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-controls', listId);
+    toggle.setAttribute('aria-label', `${open ? 'Fold' : 'Open'} ${c.hub}`);
+    toggle.innerHTML = CHEVRON;
+    toggle.addEventListener('click', () => {
+      openDomains.set(c.hub, !open);
+      renderIndex(corpus, traced, onTrace, onRelease);
+    });
+
+    row.append(toggle, item(c.hub, c.hub, 'index__item--hub', c.items.length));
+
+    const concepts = document.createElement('ul');
+    concepts.className = 'index__list index__list--concepts';
+    concepts.id = listId;
+    concepts.hidden = !open;
+    for (const name of c.items) {
+      const cli = document.createElement('li');
+      cli.append(item(name, name));
+      concepts.append(cli);
+    }
+
+    li.append(row, concepts);
+    domains.append(li);
+  }
+
+  const specHead = document.createElement('p');
+  specHead.className = 'index__group'; specHead.id = 'index-specimens';
+  specHead.textContent = 'Specimens';
+  const specs = document.createElement('ul');
+  specs.className = 'index__list index__list--specimens';
+  specs.setAttribute('aria-labelledby', 'index-specimens');
+  for (const d of corpus.documents) {
+    const li = document.createElement('li');
+    li.append(item(d.t, d.t.split(' — ')[0]));
+    specs.append(li);
+  }
+
+  indexEl.append(domainsHead, domains, specHead, specs);
+}
+
+function renderReadout(desc, onHop) {
+  readoutEl.textContent = '';
+  if (!desc) {
+    const p = document.createElement('p');
+    p.className = 'readout__empty'; p.textContent = 'Trace a node to read it here.';
+    readoutEl.append(p);
+    return;
+  }
+  const [title, ...rest] = desc.name.split(' — ');
+  const formRaw = rest.join(' — ').trim();
+  const form = formRaw && formRaw !== 'Specimen' ? formRaw : null;
+
+  const aside = document.createElement('aside');
+  aside.className = 'readout';
+  aside.setAttribute('aria-label', 'Traced node');
+
+  const nameEl = document.createElement('p');
+  nameEl.className = 'readout__name'; nameEl.textContent = title;
+
+  const metaEl = document.createElement('p');
+  metaEl.className = 'readout__meta';
+  metaEl.textContent = (form ? `${form}. ` : '') + (desc.kind === 'hub'
+    ? 'A domain of law.'
+    : `${KIND_LABEL[desc.kind]}${desc.domain ? ` in ${desc.domain}` : ''}.`);
+
+  aside.append(nameEl, metaEl);
+
+  if (!desc.touches.length) {
+    const none = document.createElement('p');
+    none.className = 'readout__meta'; none.textContent = 'Touches nothing in this view.';
+    aside.append(none);
+  } else {
+    const head = document.createElement('p');
+    head.className = 'readout__group'; head.textContent = 'Touches';
+    const list = document.createElement('ul');
+    list.className = 'readout__touches';
+    for (const t of desc.touches.slice(0, 10)) {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'index__item';
+      b.append(document.createTextNode(t.name));
+      for (const tag of ['contested', 'spine']) if (t[tag]) {
+        const s = document.createElement('span');
+        s.className = 'readout__tag'; s.textContent = tag;
+        b.append(s);
+      }
+      b.addEventListener('click', () => onHop(t.name));
+      li.append(b);
+      list.append(li);
+    }
+    if (desc.touches.length > 10) {
+      const more = document.createElement('li');
+      more.className = 'readout__more';
+      more.textContent = `and ${desc.touches.length - 10} more`;
+      list.append(more);
+    }
+    aside.append(head, list);
+  }
+  readoutEl.append(aside);
+}
+
+/* ============================================================
+   6. TABS
+   ============================================================ */
+const tabsEl   = document.getElementById('tabs');
+const stripEl  = document.getElementById('tabs-strip');
+const tabButtons = [];
+
+DATA.industries.forEach((ind, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.role = 'tab'; b.className = 'tab';
+  b.id = `tab-${ind.key}`;
+  b.textContent = ind.label;
+  b.setAttribute('aria-selected', String(i === 0));
+  b.setAttribute('aria-controls', 'world-panel');
+  b.addEventListener('click', () => select(ind.key));
+  b.addEventListener('keydown', (e) => {
+    const n = DATA.industries.length;
+    const go = (j) => {
+      e.preventDefault();
+      const k = ((j % n) + n) % n;
+      tabButtons[k].focus({ preventScroll: true });
+      scrollIntoStrip(tabButtons[k]);
+    };
+    switch (e.key) {
+      case 'ArrowRight': case 'ArrowDown': go(i + 1); break;
+      case 'ArrowLeft':  case 'ArrowUp':   go(i - 1); break;
+      case 'Home': go(0); break;
+      case 'End':  go(n - 1); break;
+      case 'Enter': case ' ': e.preventDefault(); select(ind.key); break;
+    }
+  });
+  tabButtons.push(b);
+  stripEl.append(b);
+});
+
+function scrollIntoStrip(el) {
+  if (!el) return;
+  const left = el.offsetLeft, right = left + el.offsetWidth;
+  let to = stripEl.scrollLeft;
+  if (left < stripEl.scrollLeft + 56) to = left - 56;
+  else if (right > stripEl.scrollLeft + stripEl.clientWidth - 56) to = right - stripEl.clientWidth + 56;
+  to = Math.max(0, to);
+  if (Math.abs(to - stripEl.scrollLeft) > 1)
+    stripEl.scrollTo({ left: to, behavior: REDUCED.matches ? 'auto' : 'smooth' });
+}
+function syncArrows() {
+  const max = stripEl.scrollWidth - stripEl.clientWidth;
+  tabsEl.dataset.back = String(stripEl.scrollLeft > 1);
+  tabsEl.dataset.more = String(stripEl.scrollLeft < max - 1);
+}
+stripEl.addEventListener('scroll', syncArrows, { passive: true });
+addEventListener('resize', syncArrows);
+const nudgeStrip = (dir) => stripEl.scrollBy({
+  left: dir * stripEl.clientWidth * 0.7,
+  behavior: REDUCED.matches ? 'auto' : 'smooth',
+});
+document.getElementById('tabs-back').addEventListener('click', () => nudgeStrip(-1));
+document.getElementById('tabs-more').addEventListener('click', () => nudgeStrip(1));
+syncArrows();
+
+/* ============================================================
+   7. ORCHESTRATION
+   ============================================================ */
+const stageEl  = document.getElementById('stage');
+const hosts    = [...document.querySelectorAll('.world__host')];
+const resetBtn = document.getElementById('reset');
+const zoomIn   = document.getElementById('zoom-in');
+const zoomOut  = document.getElementById('zoom-out');
+const zoomPct  = document.getElementById('zoom-pct');
+
+let current = null;          // { key, slot, api, corpus }
+let leaving = null;
+let slot = 0;
+let busy = false;
+
+function showZoom() {
+  const d = current ? current.api.dist : P.dist;
+  zoomPct.textContent = `${Math.round((100 * P.dist) / d)} %`;
+  zoomIn.disabled  = d <= 0.700001;
+  zoomOut.disabled = d >= 4.199999;
+}
+
+function paintPanels() {
+  if (!current) { renderIndex(null); renderReadout(null); return; }
+  const focus = current.api.focus;
+  renderIndex(current.corpus, focus ? focus.name : null, hop, release);
+  renderReadout(focus ? current.api.describe(focus) : null, hop);
+}
+function hop(name) { if (current?.api.trace(name)) { paintPanels(); showZoom(); } }
+function release() { current?.api.release(); paintPanels(); showZoom(); }
+
+function select(key) {
+  if (busy || current?.key === key) return;
+  const ind = DATA.industries.find(i => i.key === key) || DATA.industries[0];
+  busy = true;
+  stripEl.setAttribute('aria-busy', 'true');
+  for (const b of tabButtons) b.setAttribute('aria-selected', String(b.id === `tab-${ind.key}`));
+  scrollIntoStrip(tabButtons[DATA.industries.indexOf(ind)]);
+
+  // tear down whatever is still fading out, and start the outgoing one leaving
+  if (leaving) { leaving.api.dispose(); hosts[leaving.slot].dataset.ready = 'false'; leaving = null; }
+  if (current) {
+    hosts[current.slot].dataset.ready = 'leaving';
+    leaving = current;
+    const done = leaving;
+    setTimeout(() => {
+      if (leaving !== done) return;
+      done.api.dispose();
+      hosts[done.slot].dataset.ready = 'false';
+      leaving = null;
+    }, 260);
+  }
+
+  openDomains.clear();
+  const corpus = compose(ind);
+  slot = current ? 1 - current.slot : 0;
+  const host = hosts[slot];
+  host.dataset.ready = 'false';
+
+  const subject = ind.subject.charAt(0).toUpperCase() + ind.subject.slice(1);
+  const api = mountWorld(host, corpus, {
+    label: `${subject} drawn as a connected graph: the domains of Indian commercial law it runs on, with the concepts and specimen documents that hang off them, turning slowly in depth.`,
+    interactive: true,
+    params: NARROW.matches ? { labelDensityMul: 0.42, docLabels: false, labelSize: 0.92 } : {},
+    onReady: () => { host.dataset.ready = 'true'; busy = false; stripEl.removeAttribute('aria-busy'); },
+    onFocus: () => { paintPanels(); showZoom(); },
+  });
+
+  current = { key: ind.key, slot, api, corpus };
+  statusEl.textContent = `${ind.label}: ${corpus.clusters.length} domains, ${corpus.documents.length} specimens.`;
+  paintPanels();
+  showZoom();
+}
+
+resetBtn.addEventListener('click', release);
+zoomIn.addEventListener('click',  () => { current?.api.zoom(0.82); showZoom(); });
+zoomOut.addEventListener('click', () => { current?.api.zoom(1.2195121951219512); showZoom(); });
+
+stageEl.addEventListener('keydown', (e) => {
+  const api = current?.api;
+  if (!api) return;
+  switch (e.key) {
+    case 'ArrowLeft':  e.preventDefault(); api.nudge(-0.014, 0); break;
+    case 'ArrowRight': e.preventDefault(); api.nudge(0.014, 0); break;
+    case 'ArrowUp':    e.preventDefault(); api.nudge(0, -0.012); break;
+    case 'ArrowDown':  e.preventDefault(); api.nudge(0, 0.012); break;
+    case '+': case '=': e.preventDefault(); api.zoom(0.82); showZoom(); break;
+    case '-': case '_': e.preventDefault(); api.zoom(1.2195121951219512); showZoom(); break;
+    case 'Escape': if (api.focus) { e.preventDefault(); release(); } break;
+  }
+});
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && current?.api.focus && !stageEl.contains(document.activeElement)) release();
+});
+
+select(DATA.industries[0].key);
+
+})();
+</script>
+</body>
+</html>
