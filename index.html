@@ -63,6 +63,8 @@
   --ds-dur-slow: .76s;
   --ds-dur-exit: .24s;
   --ds-ease: ease;
+  --ds-ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ds-dur-fold: .45s;
 }
 
 /* ============================================================
@@ -109,17 +111,6 @@ body { overflow: hidden; }
 }
 .model__top { position: relative; min-width: 0; padding-bottom: 20px; }
 /* a wash behind the headline so it reads over drifting nodes */
-.model__top::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 -56px;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(to bottom,
-    color-mix(in srgb, var(--ds-bg) 94%, transparent) 0%,
-    color-mix(in srgb, var(--ds-bg) 82%, transparent) 62%,
-    transparent 100%);
-}
 .model__head {
   padding: clamp(24px, 4.5vh, 56px) var(--ds-gutter) 0;
   text-align: center;
@@ -149,22 +140,36 @@ body { overflow: hidden; }
   color: var(--ds-ink-soft);
   margin: 0;
 }
-.model__tabs { padding: 0 var(--ds-gutter); }
+.model__tabs { min-width: 0; }
 
 /* ============================================================
    4. TABS
    ============================================================ */
-.tabs { max-width: 1120px; margin: 20px auto 0; display: flow-root; position: relative; pointer-events: auto; }
+.tabs { margin: 20px 0 0; display: flow-root; position: relative; pointer-events: auto; }
+/* Registered so the edge fades can transition rather than snap. */
+@property --fade-start { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --fade-end   { syntax: '<length>'; inherits: false; initial-value: 0px; }
 .tabs__strip {
   gap: var(--ds-space-1);
   overscroll-behavior-x: contain;
   scrollbar-width: none;
   margin: -4px 0;
-  padding: 4px 0;
+  padding: 4px var(--ds-gutter);
+  scroll-padding-inline: var(--ds-gutter);
   display: flex;
   position: relative;
   overflow-x: auto;
+  /* The strip fades itself out at whichever edge has more to scroll to.
+     A mask, not a painted gradient: over a live canvas a painted fade
+     shows up as a flat block with the graph cut off at its edge. */
+  --fade-start: 0px;
+  --fade-end: 0px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+  transition: --fade-start var(--ds-dur-fast) var(--ds-ease), --fade-end var(--ds-dur-fast) var(--ds-ease);
 }
+.tabs[data-back="true"] .tabs__strip { --fade-start: 140px; }
+.tabs[data-more="true"] .tabs__strip { --fade-end: 140px; }
 .tabs__strip::-webkit-scrollbar { display: none; }
 .tab {
   border: 1px solid var(--ds-chrome);
@@ -195,14 +200,7 @@ body { overflow: hidden; }
   color: var(--ds-ink-inverse);
 }
 .tabs__strip[aria-busy="true"] .tab { cursor: progress; }
-.tabs__fade {
-  background: linear-gradient(to left, var(--ds-bg), transparent);
-  pointer-events: none;
-  width: 178px;
-  position: absolute;
-  top: 0; bottom: 0; right: 0;
-}
-.tabs__fade--start { left: 0; right: auto; transform: scaleX(-1); }
+.tabs__fade { display: none; }   /* superseded by the strip's own mask */
 .tabs__arrow {
   background: var(--ds-inverse);
   width: 32px; height: 32px;
@@ -215,10 +213,10 @@ body { overflow: hidden; }
   padding: 0;
   display: flex;
   position: absolute;
-  top: 4px; right: 0;
+  top: 4px; right: var(--ds-gutter);
 }
 .tabs__arrow svg { width: 32px; height: 32px; display: block; }
-.tabs__arrow--start { left: 0; right: auto; transform: rotate(180deg); }
+.tabs__arrow--start { left: var(--ds-gutter); right: auto; transform: rotate(180deg); }
 .tabs__fade, .tabs__arrow {
   transition: opacity var(--ds-dur-fast) var(--ds-ease), visibility var(--ds-dur-fast) var(--ds-ease);
 }
@@ -231,13 +229,17 @@ body { overflow: hidden; }
    5. WORLD — a full-page graph with the chat floating over it
    ============================================================ */
 .world {
+  position: relative;
   grid-template-columns: 360px minmax(0, 1fr);
   gap: var(--ds-space-2);
   min-width: 0;
   min-height: 0;
   padding: 0 var(--ds-gutter) var(--ds-gutter);
   display: grid;
+  transition: grid-template-columns var(--ds-dur-fold) var(--ds-ease-out), column-gap var(--ds-dur-fold) var(--ds-ease-out);
 }
+/* folded: the chat's column closes and the graph takes the whole width */
+.world[data-chat="closed"] { grid-template-columns: 0px minmax(0, 1fr); column-gap: 0px; }
 .world__chat {
   pointer-events: auto;
   align-self: end;
@@ -248,6 +250,12 @@ body { overflow: hidden; }
   border-radius: 24px;
   background: var(--ds-surface-alt);
   overflow: hidden;
+  transition: opacity .25s var(--ds-ease), visibility 0s linear 0s;
+}
+.world[data-chat="closed"] .world__chat {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s var(--ds-ease), visibility 0s linear var(--ds-dur-fold);
 }
 /* the uncovered part of the page; the graph is centred and sized to it */
 .world__frame { position: relative; min-width: 0; min-height: 0; }
@@ -261,6 +269,12 @@ body { overflow: hidden; }
   transition: opacity var(--ds-dur-slow) var(--ds-ease);
   position: absolute;
   inset: 0;
+  /* The graph still runs the full page, but it is held back to a ghost
+     behind the headline and comes up to full strength as it reaches the
+     open area, so labels never sit on top of the intro. --top-h is the
+     headline block's height, kept current from script. */
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0 / .16) 0, rgb(0 0 0 / .16) calc(var(--top-h, 280px) - 96px), #000 calc(var(--top-h, 280px) + 8px));
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / .16) 0, rgb(0 0 0 / .16) calc(var(--top-h, 280px) - 96px), #000 calc(var(--top-h, 280px) + 8px));
 }
 .world__host[data-ready="true"] { opacity: 1; pointer-events: auto; }
 .world__host[data-ready="leaving"] {
@@ -350,7 +364,7 @@ body { overflow: hidden; }
   list-style: none;
   display: grid;
   position: absolute;
-  bottom: 0; left: 0;
+  right: 0; bottom: 0;
   border-radius: 16px;
   background: color-mix(in srgb, var(--ds-surface-alt) 90%, transparent);
 }
@@ -366,7 +380,14 @@ body { overflow: hidden; }
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
   }
-  .chat__form { border-top-color: rgba(255, 255, 255, .6); }
+  .chat__form, .chat__head { border-color: rgba(255, 255, 255, .6); }
+  .chat__launcher {
+    background: var(--glass-fill);
+    box-shadow: var(--glass-shade), var(--glass-catch);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+  .chat__launcher:hover { background: rgba(255, 255, 255, .82); }
   .chat__input { background: rgba(255, 255, 255, .5); }
   .chat__input:focus { background: rgba(255, 255, 255, .78); }
   .chat__chip { background: rgba(255, 255, 255, .38); }
@@ -522,6 +543,104 @@ body { overflow: hidden; }
 .chat__send:disabled { opacity: .4; cursor: default; }
 
 /* ============================================================
+   7b. CHAT — folding
+   ============================================================ */
+.chat__head {
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-1);
+  padding: 8px 8px 8px 18px;
+  border-bottom: 1px solid var(--ds-rule-panel);
+  display: flex;
+}
+.chat__title {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-micro);
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+  margin: 0;
+}
+.chat__fold {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--ds-chrome);
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  transition: background-color var(--ds-dur-fast) var(--ds-ease);
+}
+.chat__fold:hover { background: rgb(0 0 0 / .06); }
+.chat__fold svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+  transform: rotate(180deg);   /* points left: the pane folds away to the left */
+}
+
+/* Shown only while the chat is folded, in the corner it folded into. */
+.chat__launcher {
+  position: absolute;
+  left: var(--ds-gutter);
+  bottom: var(--ds-gutter);
+  z-index: 3;
+  pointer-events: auto;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  gap: 10px;
+  border: 1px solid var(--ds-chrome);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-surface-alt);
+  color: var(--ds-chrome);
+  font-family: var(--ds-font-body);
+  font-weight: 300;
+  font-size: var(--ds-text-body);
+  letter-spacing: var(--ds-track-body);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  align-items: center;
+  display: inline-flex;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition:
+    opacity .18s var(--ds-ease),
+    transform .3s var(--ds-ease-out),
+    visibility 0s linear .3s,
+    background-color var(--ds-dur-fast) var(--ds-ease);
+}
+.world[data-chat="closed"] .chat__launcher {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity .3s var(--ds-ease) .2s,
+    transform .45s var(--ds-ease-out) .2s,
+    visibility 0s linear 0s,
+    background-color var(--ds-dur-fast) var(--ds-ease);
+}
+.chat__launcher:hover { background: var(--ds-bg); }
+.chat__launcher svg { width: 20px; height: 20px; flex: none; display: block; }
+/* a message arrived while folded, e.g. from clicking a node */
+.chat__unread {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(176 52 42);
+  margin-left: -2px;
+}
+.chat__unread[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .world, .world__chat, .chat__launcher { transition-duration: 0s !important; transition-delay: 0s !important; }
+}
+
+/* ============================================================
    8. RESPONSIVE
    ============================================================ */
 /* short laptop screens: give the height back to the graph */
@@ -535,11 +654,39 @@ body { overflow: hidden; }
     grid-template-rows: minmax(0, 1fr) auto;
   }
   .world__frame { order: 1; }
-  .world__chat { order: 2; align-self: stretch; height: min(40dvh, 400px); }
+  .world__chat {
+    order: 2;
+    align-self: stretch;
+    height: min(40dvh, 400px);
+    transition: height var(--ds-dur-fold) var(--ds-ease-out), opacity .25s var(--ds-ease), visibility 0s linear 0s;
+  }
+  /* folded on narrow screens: the sheet drops away and the graph takes the height */
+  .world[data-chat="closed"] { grid-template-columns: minmax(0, 1fr); row-gap: 0px; }
+  .world[data-chat="closed"] .world__chat {
+    height: 0;
+    border-width: 0;
+    transition: height var(--ds-dur-fold) var(--ds-ease-out), border-width 0s linear var(--ds-dur-fold), opacity .18s var(--ds-ease), visibility 0s linear var(--ds-dur-fold);
+  }
+  .chat__fold svg { transform: rotate(90deg); }   /* points down: the sheet folds downward */
+}
+@media (min-width: 1001px) {
+  /* hold the pane's contents at full width while its column closes,
+     so they are clipped away rather than squeezed into a reflow */
+  .chat { min-width: 344px; }
 }
 @media (max-width: 767px) {
-  .tabs__fade { width: 96px; }
+  .tabs[data-back="true"] .tabs__strip { --fade-start: 72px; }
+  .tabs[data-more="true"] .tabs__strip { --fade-end: 72px; }
   .model__head { gap: 10px; }
+  /* six lines of intro left the graph a sliver on a phone; three is the
+     line. The full text stays in the page for screen readers. */
+  .model__lede {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
   .model__title { font-size: 36px; }
   .model__lede { font-size: 14px; }
   .world__chat { height: min(38dvh, 360px); }
@@ -582,9 +729,15 @@ body { overflow: hidden; }
 
     <div class="world">
       <!-- Chat -->
-      <div class="world__chat">
+      <div class="world__chat" id="chat-pane">
         <div class="chat">
-          <div class="chat__log" id="chat-log" role="log" aria-live="off" aria-label="Conversation"></div>
+          <div class="chat__head">
+            <p class="chat__title" id="chat-title">Ask the graph</p>
+            <button type="button" class="chat__fold" id="chat-fold" aria-controls="chat-pane" aria-expanded="true" aria-label="Fold the chat away">
+              <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+            </button>
+          </div>
+          <div class="chat__log" id="chat-log" role="log" aria-live="off" aria-labelledby="chat-title"></div>
           <p class="sr-only" aria-live="polite" id="chat-status"></p>
           <form class="chat__form" id="chat-form" autocomplete="off">
             <input class="chat__input" id="chat-input" type="text" placeholder="Ask about this world…" aria-label="Ask about this world" />
@@ -594,6 +747,14 @@ body { overflow: hidden; }
           </form>
         </div>
       </div>
+
+      <!-- Stands in for the chat while it is folded away -->
+      <button type="button" class="chat__launcher" id="chat-open" aria-controls="chat-pane" aria-expanded="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 3.5v-3.5H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"></path><path d="M7.5 10h9M7.5 13h6" stroke-linecap="round"></path></svg>
+        <span>Ask the graph</span>
+        <span class="chat__unread" id="chat-unread" hidden></span>
+        <span class="sr-only" id="chat-unread-sr"></span>
+      </button>
 
       <!-- The uncovered part of the page: the graph is fitted to it, and the controls sit in its corners -->
       <div class="world__frame" id="frame">
@@ -1156,20 +1317,29 @@ function mountWorld(host, corpus, opts = {}) {
   let VW = 0, VH = 0, focal = 0;
   // The canvas covers the page, but the headline and chat cover part of it.
   // The graph is centred on, and sized to, the part left uncovered.
-  let FX = 0, FY = 0, FS = 1;
+  let FX = 0, FY = 0, FS = 1;          // where the graph is drawn this frame
+  let toFX = 0, toFY = 0, toFS = 1;    // where the uncovered frame is now
+  let framed = false;
   function resize() {
     const r = stage.getBoundingClientRect();
     VW = Math.max(1, r.width); VH = Math.max(1, r.height);
-    canvas.width = Math.round(VW * DPR); canvas.height = Math.round(VH * DPR);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    // Resizing a canvas clears it. The frame reports here often, every frame
+    // while the chat folds, so only reallocate when the canvas itself changed
+    // or each report would flash a blank frame.
+    const bw = Math.round(VW * DPR), bh = Math.round(VH * DPR);
+    if (canvas.width !== bw || canvas.height !== bh) {
+      canvas.width = bw; canvas.height = bh;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
     const f = opts.frameEl?.getBoundingClientRect();
     if (f && f.width > 1 && f.height > 1) {
-      FX = f.left - r.left + f.width / 2;
-      FY = f.top - r.top + f.height / 2;
-      FS = Math.min(f.width, f.height);
+      toFX = f.left - r.left + f.width / 2;
+      toFY = f.top - r.top + f.height / 2;
+      toFS = Math.min(f.width, f.height);
     } else {
-      FX = VW / 2; FY = VH / 2; FS = VH;
+      toFX = VW / 2; toFY = VH / 2; toFS = VH;
     }
+    if (!framed) { FX = toFX; FY = toFY; FS = toFS; framed = true; }
   }
   resize();
   // the frame can change on its own, e.g. when the headline font arrives and rewraps
@@ -1467,6 +1637,12 @@ function mountWorld(host, corpus, opts = {}) {
     const damp = Math.pow(0.9, dt / 16.7);
     cam.vYaw *= damp; cam.vPitch *= damp;
 
+    // glide after the frame when it moves, rather than jump with it
+    const glide = reduced ? 1 : 1 - Math.exp(-dt / 160);
+    FX += (toFX - FX) * glide;
+    FY += (toFY - FY) * glide;
+    FS += (toFS - FS) * glide;
+
     const ease = 1 - Math.exp(-dt / 190);
     const look = lookAt || { x: 0, y: 0, z: 0 };
     cam.tx += (look.x - cam.tx) * ease;
@@ -1583,6 +1759,13 @@ const logEl    = document.getElementById('chat-log');
 const sayEl    = document.getElementById('chat-status');
 const formEl   = document.getElementById('chat-form');
 const inputEl  = document.getElementById('chat-input');
+const worldEl  = document.querySelector('.world');
+const paneEl   = document.getElementById('chat-pane');
+const foldBtn  = document.getElementById('chat-fold');
+const openBtn  = document.getElementById('chat-open');
+const dotEl    = document.getElementById('chat-unread');
+const dotSrEl  = document.getElementById('chat-unread-sr');
+const finePointer = () => matchMedia('(pointer: fine)').matches;
 
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
 const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
@@ -1605,7 +1788,43 @@ function said(text) {
   bubble('user').append(p);
   scrollLog();
 }
+let unread = 0;
+function markUnread() {
+  if (worldEl.dataset.chat !== 'closed') return;
+  unread++;
+  dotEl.hidden = false;
+  dotSrEl.textContent = `(${plural(unread, 'new message')})`;
+}
+function clearUnread() {
+  unread = 0;
+  dotEl.hidden = true;
+  dotSrEl.textContent = '';
+}
+
+/* Fold the chat away, or bring it back. Focus follows the control that
+   stays on screen, so a keyboard user is never left on a hidden element. */
+function setChat(open, { focus = true } = {}) {
+  worldEl.dataset.chat = open ? 'open' : 'closed';
+  foldBtn.setAttribute('aria-expanded', String(open));
+  openBtn.setAttribute('aria-expanded', String(open));
+  if (open) {
+    paneEl.inert = false;
+    clearUnread();
+    // the input on a mouse; the fold button on touch, so no keyboard pops up
+    if (focus) (finePointer() ? inputEl : foldBtn).focus({ preventScroll: true });
+    openBtn.inert = true;
+    scrollLog();
+  } else {
+    openBtn.inert = false;
+    if (focus) openBtn.focus({ preventScroll: true });
+    paneEl.inert = true;
+  }
+}
+foldBtn.addEventListener('click', () => setChat(false));
+openBtn.addEventListener('click', () => setChat(true));
+
 function reply(spec) {
+  markUnread();
   const el = bubble('bot');
   if (spec.meta) {
     const m = document.createElement('span');
@@ -2046,6 +2265,13 @@ syncArrows();
 const stageEl  = document.getElementById('stage');
 const hosts    = [...document.querySelectorAll('.world__host')];
 const frameEl  = document.getElementById('frame');
+
+// keep the canvas mask in step with the headline block's real height
+const modelEl = document.querySelector('.model');
+const topEl   = document.querySelector('.model__top');
+const syncTopH = () => modelEl.style.setProperty('--top-h', `${Math.round(topEl.getBoundingClientRect().height)}px`);
+syncTopH();
+new ResizeObserver(syncTopH).observe(topEl);
 const resetBtn = document.getElementById('reset');
 const zoomIn   = document.getElementById('zoom-in');
 const zoomOut  = document.getElementById('zoom-out');
@@ -2144,6 +2370,7 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && current?.api.focus && !stageEl.contains(document.activeElement)) release();
 });
 
+setChat(true, { focus: false });
 select(DATA.industries[0].key);
 
 })();
