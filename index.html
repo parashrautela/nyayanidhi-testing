@@ -29,6 +29,13 @@
   --ds-surface-alt: #fff;
   --ds-rule-strong: #00000040;
   --ds-rule-panel: #0000001a;
+
+  /* glass: the panes that float over the live graph */
+  --glass-fill: linear-gradient(155deg, rgba(255, 255, 255, .68) 0%, rgba(255, 255, 255, .48) 100%);
+  --glass-edge: rgba(255, 255, 255, .72);
+  --glass-shade: 0 16px 48px rgba(26, 24, 23, .10), 0 2px 8px rgba(26, 24, 23, .05);
+  --glass-catch: inset 0 1px 0 rgba(255, 255, 255, .9);
+  --glass-blur: blur(24px) saturate(1.6);
   --ds-focus: #1a1817;
 
   --ds-font-body: "Inter", ui-sans-serif, -apple-system, "Helvetica Neue", sans-serif;
@@ -80,22 +87,52 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 
 /* ============================================================
-   3. SECTION — head
+   3. PAGE — the graph is the page; everything else floats on it
    ============================================================ */
-.model { background: var(--ds-bg); padding-bottom: var(--ds-space-6); }
+html, body { height: 100%; }
+body { overflow: hidden; }
+
+.model { position: fixed; inset: 0; background: var(--ds-bg); }
+.model__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  grid-template-rows: auto minmax(0, 1fr);
+  /* An explicit column. Without it the implicit one sizes to the tab
+     strip's content (1120px) and every screen narrower than that
+     overflows, headline and all. */
+  grid-template-columns: minmax(0, 1fr);
+  display: grid;
+  /* glass over the canvas: it only takes the pointer where there is
+     something to press, so the graph can be dragged everywhere else */
+  pointer-events: none;
+}
+.model__top { position: relative; min-width: 0; padding-bottom: 20px; }
+/* a wash behind the headline so it reads over drifting nodes */
+.model__top::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -56px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--ds-bg) 94%, transparent) 0%,
+    color-mix(in srgb, var(--ds-bg) 82%, transparent) 62%,
+    transparent 100%);
+}
 .model__head {
-  padding: var(--ds-space-6) var(--ds-gutter) 0;
+  padding: clamp(24px, 4.5vh, 56px) var(--ds-gutter) 0;
   text-align: center;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   display: flex;
 }
 .model__title {
   max-width: var(--ds-rail);
   font-family: var(--ds-font-display);
   font-weight: 300;
-  font-size: var(--ds-text-display);
+  font-size: clamp(40px, calc(3vw + 24px), 72px);
   line-height: var(--ds-leading-tight);
   letter-spacing: var(--ds-track-display);
   color: var(--ds-ink);
@@ -112,12 +149,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   color: var(--ds-ink-soft);
   margin: 0;
 }
-.model__world { padding: 0 var(--ds-gutter); }
+.model__tabs { padding: 0 var(--ds-gutter); }
 
 /* ============================================================
    4. TABS
    ============================================================ */
-.tabs { max-width: 1120px; margin: 64px auto 0; display: flow-root; position: relative; }
+.tabs { max-width: 1120px; margin: 20px auto 0; display: flow-root; position: relative; pointer-events: auto; }
 .tabs__strip {
   gap: var(--ds-space-1);
   overscroll-behavior-x: contain;
@@ -141,7 +178,10 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   white-space: nowrap;
   cursor: pointer;
   transition: background-color var(--ds-dur-fast) var(--ds-ease), color var(--ds-dur-fast) var(--ds-ease);
-  background: 0 0;
+  /* tabs now sit over a live canvas, so they need a ground of their own */
+  background: color-mix(in srgb, var(--ds-bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   flex: none;
   align-items: center;
   padding: 0 24px;
@@ -188,35 +228,39 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .tabs[data-back="false"] .tabs__arrow--start { opacity: 0; visibility: hidden; }
 
 /* ============================================================
-   5. WORLD — chat beside the graph
+   5. WORLD — a full-page graph with the chat floating over it
    ============================================================ */
 .world {
-  max-width: 1120px;
-  margin: var(--ds-space-4) auto 0;
+  grid-template-columns: 360px minmax(0, 1fr);
   gap: var(--ds-space-2);
-  grid-template-rows: 680px;
-  grid-template-columns: 320px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  padding: 0 var(--ds-gutter) var(--ds-gutter);
   display: grid;
 }
-.world__chat, .world__card {
+.world__chat {
+  pointer-events: auto;
+  align-self: end;
+  height: min(100%, 640px);
+  min-width: 0;
+  min-height: 0;
   border: 1px solid var(--ds-rule-strong);
-  background: var(--ds-surface-alt);
   border-radius: 24px;
-  min-width: 0; min-height: 0;
+  background: var(--ds-surface-alt);
   overflow: hidden;
 }
-.world__chat { grid-area: 1/1; }
-.world__card { flex-direction: column; grid-area: 1/2; display: flex; position: relative; }
-.world__stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
-.world__stage:focus-visible { outline-offset: -3px; }
+/* the uncovered part of the page; the graph is centred and sized to it */
+.world__frame { position: relative; min-width: 0; min-height: 0; }
+
+/* the canvas fills the page, underneath everything */
+.world__stage { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.world__stage:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: -4px; }
 .world__host {
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--ds-dur-slow) var(--ds-ease);
   position: absolute;
   inset: 0;
-  -webkit-mask-image: radial-gradient(farthest-side, #000 58%, #0000008c 84%, #0000 100%);
-  mask-image: radial-gradient(farthest-side, #000 58%, #0000008c 84%, #0000 100%);
 }
 .world__host[data-ready="true"] { opacity: 1; pointer-events: auto; }
 .world__host[data-ready="leaving"] {
@@ -224,15 +268,16 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   transition-duration: var(--ds-dur-exit);
   pointer-events: none;
 }
-.world .corpus__stage { position: absolute; inset: 0; }
-.world .corpus__canvas {
+.world__stage .corpus__stage { position: absolute; inset: 0; }
+.world__stage .corpus__canvas {
   cursor: grab;
-  touch-action: pan-y;
+  /* nothing to scroll any more, so every gesture belongs to the graph */
+  touch-action: none;
   width: 100%; height: 100%;
   display: block;
 }
-.world .corpus__canvas.pointing { cursor: pointer; }
-.world .corpus__canvas.grabbing { cursor: grabbing; }
+.world__stage .corpus__canvas.pointing { cursor: pointer; }
+.world__stage .corpus__canvas.grabbing { cursor: grabbing; }
 
 /* ============================================================
    6. WORLD — controls
@@ -257,7 +302,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   display: inline-flex;
 }
 .world__btn:hover { background: var(--ds-bg); }
-.world__reset { z-index: 2; position: absolute; top: 7px; left: 7px; }
+.world__reset { z-index: 2; position: absolute; top: 0; left: 0; pointer-events: auto; }
 .world__zoom {
   z-index: 2;
   border: 1px solid var(--ds-chrome);
@@ -268,7 +313,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   padding: 2px;
   display: inline-flex;
   position: absolute;
-  top: 7px; right: 7px;
+  top: 0; right: 0;
+  pointer-events: auto;
 }
 .world__zoom-btn {
   background: var(--ds-inverse);
@@ -299,11 +345,31 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   z-index: 2;
   row-gap: var(--ds-space-1);
   pointer-events: none;
-  margin: 0; padding: 0;
+  margin: 0;
+  padding: 12px 14px;
   list-style: none;
   display: grid;
   position: absolute;
-  bottom: 15px; left: 15px;
+  bottom: 0; left: 0;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ds-surface-alt) 90%, transparent);
+}
+/* Glass. Where the browser can blur what is behind it, the chat and the
+   hints are frosted rather than painted, and the graph drifts behind them
+   as soft light. Without backdrop-filter they stay solid and legible. */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .world__chat,
+  .world__legend {
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shade), var(--glass-catch);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+  .chat__form { border-top-color: rgba(255, 255, 255, .6); }
+  .chat__input { background: rgba(255, 255, 255, .5); }
+  .chat__input:focus { background: rgba(255, 255, 255, .78); }
+  .chat__chip { background: rgba(255, 255, 255, .38); }
 }
 .world__hint {
   font-family: var(--ds-font-mono);
@@ -458,42 +524,61 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 /* ============================================================
    8. RESPONSIVE
    ============================================================ */
+/* short laptop screens: give the height back to the graph */
+@media (max-height: 760px) and (min-width: 768px) {
+  .model__head { gap: 10px; padding-top: 20px; }
+  .model__title { font-size: clamp(36px, calc(2.4vw + 18px), 52px); }
+}
 @media (max-width: 1000px) {
-  .world { grid-template-rows: none; grid-template-columns: minmax(0, 1fr); }
-  .world__chat, .world__card { grid-area: auto; }
-  .world__card { order: 1; }
-  .world__chat { order: 2; height: 440px; }
-  .world__stage { flex: none; height: clamp(440px, 60vh, 640px); }
+  .world {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .world__frame { order: 1; }
+  .world__chat { order: 2; align-self: stretch; height: min(40dvh, 400px); }
 }
 @media (max-width: 767px) {
   .tabs__fade { width: 96px; }
-  .world__stage { height: clamp(320px, 56svh, 560px); }
+  .model__head { gap: 10px; }
+  .model__title { font-size: 36px; }
+  .model__lede { font-size: 14px; }
+  .world__chat { height: min(38dvh, 360px); }
+  /* the hints name mouse and keyboard moves a phone does not have */
+  .world__legend { display: none; }
 }
 </style>
 </head>
 <body>
 
 <section class="model" aria-labelledby="model-title">
-  <div class="model__head">
-    <h1 class="model__title" id="model-title">Model your business</h1>
-    <p class="model__lede">Every contract, licence, notice, approval and event a business carries is already a node with relations to the others. Pick an industry to see that world drawn as a typed state graph: the domains of law it runs on, the instruments it turns on, and the questions where they contest each other.</p>
+  <!-- The graph is the page. Everything after this floats over it. -->
+  <div class="world__stage" id="stage" tabindex="0" role="group" aria-label="The world" aria-describedby="model-legend">
+    <div class="world__host" data-ready="false"></div>
+    <div class="world__host" data-ready="false"></div>
   </div>
 
-  <div class="model__world">
-    <!-- Industry tabs -->
-    <div class="tabs" id="tabs" data-back="false" data-more="true">
-      <div class="tabs__strip" id="tabs-strip" role="tablist" aria-label="Industries"></div>
-      <div class="tabs__fade tabs__fade--start"></div>
-      <button type="button" class="tabs__arrow tabs__arrow--start" id="tabs-back" aria-label="Scroll industries left">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
-      </button>
-      <div class="tabs__fade tabs__fade--end"></div>
-      <button type="button" class="tabs__arrow tabs__arrow--end" id="tabs-more" aria-label="Scroll industries right">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
-      </button>
-    </div>
-
-    <p class="sr-only" aria-live="polite" id="model-status"></p>
+  <div class="model__overlay">
+    <header class="model__top">
+      <div class="model__head">
+        <h1 class="model__title" id="model-title">Model your business</h1>
+        <p class="model__lede">Every contract, licence, notice, approval and event a business carries is already a node with relations to the others. Pick an industry to see that world drawn as a typed state graph: the domains of law it runs on, the instruments it turns on, and the questions where they contest each other.</p>
+      </div>
+      <div class="model__tabs">
+        <!-- Industry tabs -->
+        <div class="tabs" id="tabs" data-back="false" data-more="true">
+          <div class="tabs__strip" id="tabs-strip" role="tablist" aria-label="Industries"></div>
+          <div class="tabs__fade tabs__fade--start"></div>
+          <button type="button" class="tabs__arrow tabs__arrow--start" id="tabs-back" aria-label="Scroll industries left">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+          </button>
+          <div class="tabs__fade tabs__fade--end"></div>
+          <button type="button" class="tabs__arrow tabs__arrow--end" id="tabs-more" aria-label="Scroll industries right">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+          </button>
+        </div>
+      </div>
+      <p class="sr-only" aria-live="polite" id="model-status"></p>
+    </header>
 
     <div class="world">
       <!-- Chat -->
@@ -510,45 +595,39 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
         </div>
       </div>
 
-      <!-- Stage -->
-      <div class="world__card">
-        <div class="world__stage" id="stage" tabindex="0" role="group" aria-label="The world" aria-describedby="model-legend">
-          <div class="world__host" data-ready="false"></div>
-          <div class="world__host" data-ready="false"></div>
+      <!-- The uncovered part of the page: the graph is fitted to it, and the controls sit in its corners -->
+      <div class="world__frame" id="frame">
+        <button type="button" class="world__btn world__reset" id="reset">Reset view</button>
 
-          <button type="button" class="world__btn world__reset" id="reset">Reset view</button>
-
-          <div class="world__zoom" role="group" aria-label="Zoom">
-            <button type="button" class="world__zoom-btn" id="zoom-in" aria-label="Zoom in">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21 12C21 12.1989 20.921 12.3897 20.7803 12.5303C20.6397 12.671 20.4489 12.75 20.25 12.75H12.75V20.25C12.75 20.4489 12.671 20.6397 12.5303 20.7803C12.3897 20.921 12.1989 21 12 21C11.8011 21 11.6103 20.921 11.4697 20.7803C11.329 20.6397 11.25 20.4489 11.25 20.25V12.75H3.75C3.55109 12.75 3.36032 12.671 3.21967 12.5303C3.07902 12.3897 3 12.1989 3 12C3 11.8011 3.07902 11.6103 3.21967 11.4697C3.36032 11.329 3.55109 11.25 3.75 11.25H11.25V3.75C11.25 3.55109 11.329 3.36032 11.4697 3.21967C11.6103 3.07902 11.8011 3 12 3C12.1989 3 12.3897 3.07902 12.5303 3.21967C12.671 3.36032 12.75 3.55109 12.75 3.75V11.25H20.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12Z"></path></svg>
-            </button>
-            <span class="world__zoom-pct" id="zoom-pct">100 %</span>
-            <button type="button" class="world__zoom-btn" id="zoom-out" aria-label="Zoom out">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21 12C21 12.1989 20.921 12.3897 20.7803 12.5303C20.6397 12.671 20.4489 12.75 20.25 12.75H3.75C3.55109 12.75 3.36032 12.671 3.21967 12.5303C3.07902 12.3897 3 12.1989 3 12C3 11.8011 3.07902 11.6103 3.21967 11.4697C3.36032 11.329 3.55109 11.25 3.75 11.25H20.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12Z"></path></svg>
-            </button>
-          </div>
-
-          <ul class="world__legend" id="model-legend" aria-label="How to move">
-            <li class="world__hint">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.5 4.5V7.5C13.5 8.95869 12.9205 10.3576 11.8891 11.3891C10.8576 12.4205 9.45869 13 8 13C6.54131 13 5.14236 12.4205 4.11091 11.3891C3.07946 10.3576 2.5 8.95869 2.5 7.5V6.5C2.5 6.23478 2.60536 5.98043 2.79289 5.79289C2.98043 5.60536 3.23478 5.5 3.5 5.5C3.76522 5.5 4.01957 5.60536 4.20711 5.79289C4.39464 5.98043 4.5 6.23478 4.5 6.5V7C4.5 7.13261 4.55268 7.25979 4.64645 7.35355C4.74021 7.44732 4.86739 7.5 5 7.5C5.13261 7.5 5.25979 7.44732 5.35355 7.35355C5.44732 7.25979 5.5 7.13261 5.5 7V3.5C5.5 3.23478 5.60536 2.98043 5.79289 2.79289C5.98043 2.60536 6.23478 2.5 6.5 2.5C6.76522 2.5 7.01957 2.60536 7.20711 2.79289C7.39464 2.98043 7.5 3.23478 7.5 3.5V4.5C7.5 4.63261 7.55268 4.75979 7.64645 4.85355C7.74021 4.94732 7.86739 5 8 5C8.13261 5 8.25979 4.94732 8.35355 4.85355C8.44732 4.75979 8.5 4.63261 8.5 4.5V3.5C8.5 3.23478 8.60536 2.98043 8.79289 2.79289C8.98043 2.60536 9.23478 2.5 9.5 2.5C9.76522 2.5 10.0196 2.60536 10.2071 2.79289C10.3946 2.98043 10.5 3.23478 10.5 3.5V4.5C10.5 4.63261 10.5527 4.75979 10.6464 4.85355C10.7402 4.94732 10.8674 5 11 5C11.1326 5 11.2598 4.94732 11.3536 4.85355C11.4473 4.75979 11.5 4.63261 11.5 4.5C11.5 4.23478 11.6054 3.98043 11.7929 3.79289C11.9804 3.60536 12.2348 3.5 12.5 3.5C12.7652 3.5 13.0196 3.60536 13.2071 3.79289C13.3946 3.98043 13.5 4.23478 13.5 4.5Z"></path></svg>
-              <span>Drag to orbit</span>
-            </li>
-            <li class="world__hint">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.7806 11.9269C13.8505 11.9966 13.906 12.0793 13.9439 12.1705C13.9817 12.2617 14.0012 12.3594 14.0012 12.4581C14.0012 12.5568 13.9817 12.6546 13.9439 12.7457C13.906 12.8369 13.8505 12.9197 13.7806 12.9894L12.9875 13.7806C12.9178 13.8505 12.835 13.906 12.7439 13.9439C12.6527 13.9817 12.555 14.0012 12.4563 14.0012C12.3575 14.0012 12.2598 13.9817 12.1686 13.9439C12.0775 13.906 11.9947 13.8505 11.925 13.7806L8.39 10.245L7.1875 13.3806C7.1875 13.3869 7.1825 13.3938 7.17938 13.4006C7.10285 13.579 6.97554 13.731 6.81328 13.8376C6.65103 13.9441 6.461 14.0006 6.26687 14H6.2175C6.01504 13.9914 5.8201 13.9209 5.65903 13.7979C5.49796 13.675 5.37852 13.5055 5.31687 13.3125L2.05 3.3075C1.99392 3.13252 1.98713 2.94548 2.03038 2.7669C2.07363 2.58832 2.16525 2.4251 2.29518 2.29518C2.4251 2.16525 2.58832 2.07363 2.7669 2.03038C2.94548 1.98713 3.13252 1.99392 3.3075 2.05L13.3125 5.31687C13.5037 5.38084 13.6711 5.50112 13.7928 5.66192C13.9144 5.82273 13.9846 6.01655 13.9941 6.21796C14.0037 6.41936 13.9521 6.61895 13.8462 6.79052C13.7403 6.96209 13.5849 7.09764 13.4006 7.17938L13.3806 7.1875L10.245 8.39188L13.7806 11.9269ZM6 2C6.13261 2 6.25978 1.94732 6.35355 1.85355C6.44732 1.75979 6.5 1.63261 6.5 1.5V1C6.5 0.867392 6.44732 0.740215 6.35355 0.646447C6.25978 0.552678 6.13261 0.5 6 0.5C5.86739 0.5 5.74021 0.552678 5.64645 0.646447C5.55268 0.740215 5.5 0.867392 5.5 1V1.5C5.5 1.63261 5.55268 1.75979 5.64645 1.85355C5.74021 1.94732 5.86739 2 6 2ZM1 6.5H1.5C1.63261 6.5 1.75979 6.44732 1.85355 6.35355C1.94732 6.25978 2 6.13261 2 6C2 5.86739 1.94732 5.74021 1.85355 5.64645C1.75979 5.55268 1.63261 5.5 1.5 5.5H1C0.867392 5.5 0.740215 5.55268 0.646447 5.64645C0.552678 5.74021 0.5 5.86739 0.5 6C0.5 6.13261 0.552678 6.25978 0.646447 6.35355C0.740215 6.44732 0.867392 6.5 1 6.5ZM7.77625 2.4475C7.83501 2.47693 7.89899 2.49448 7.96454 2.49916C8.03009 2.50384 8.09591 2.49555 8.15826 2.47477C8.2206 2.45399 8.27823 2.42112 8.32786 2.37805C8.3775 2.33498 8.41815 2.28255 8.4475 2.22375L8.9475 1.22375C9.00684 1.10515 9.01664 0.967831 8.97474 0.842006C8.93283 0.716181 8.84266 0.612155 8.72406 0.552813C8.60546 0.49347 8.46814 0.483673 8.34232 0.525576C8.21649 0.567478 8.11247 0.657649 8.05313 0.77625L7.55312 1.77625C7.52368 1.83497 7.50609 1.89892 7.50136 1.96444C7.49664 2.02996 7.50487 2.09577 7.5256 2.15811C7.54632 2.22045 7.57912 2.27809 7.62213 2.32775C7.66514 2.3774 7.71751 2.41809 7.77625 2.4475ZM1.77625 7.55312L0.77625 8.05313C0.657649 8.11247 0.567478 8.21649 0.525576 8.34232C0.483673 8.46814 0.49347 8.60546 0.552813 8.72406C0.612155 8.84266 0.716181 8.93283 0.842006 8.97474C0.967831 9.01664 1.10515 9.00684 1.22375 8.9475L2.22375 8.4475C2.28248 8.41812 2.33484 8.37745 2.37785 8.32783C2.42086 8.27821 2.45368 8.22061 2.47442 8.15831C2.49517 8.096 2.50345 8.03023 2.49877 7.96473C2.4941 7.89923 2.47657 7.83529 2.44719 7.77656C2.4178 7.71784 2.37714 7.66547 2.32752 7.62246C2.2779 7.57945 2.2203 7.54664 2.15799 7.52589C2.09569 7.50514 2.02991 7.49687 1.96441 7.50154C1.89891 7.50621 1.83498 7.52374 1.77625 7.55312Z"></path></svg>
-              <span>Click a node to trace it</span>
-            </li>
-            <li class="world__hint">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path transform="translate(2 2)" fill-rule="evenodd" clip-rule="evenodd" d="M12 11V1C12 0.734784 11.8946 0.48043 11.7071 0.292893C11.5196 0.105357 11.2652 0 11 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1V11C0 11.2652 0.105357 11.5196 0.292893 11.7071C0.48043 11.8946 0.734784 12 1 12H11C11.2652 12 11.5196 11.8946 11.7071 11.7071C11.8946 11.5196 12 11.2652 12 11Z"></path><text x="8" y="8.2" text-anchor="middle" dominant-baseline="central" style="font-family:var(--ds-font-mono);font-size:5.217px;letter-spacing:0.26px;fill:var(--ds-ink-inverse)">esc</text></svg>
-              <span>Esc to let go</span>
-            </li>
-            <li class="world__hint">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13 2H3C2.73478 2 2.48043 2.10536 2.29289 2.29289C2.10536 2.48043 2 2.73478 2 3V13C2 13.2652 2.10536 13.5196 2.29289 13.7071C2.48043 13.8946 2.73478 14 3 14H13C13.2652 14 13.5196 13.8946 13.7071 13.7071C13.8946 13.5196 14 13.2652 14 13V3C14 2.73478 13.8946 2.48043 13.7071 2.29289C13.5196 2.10536 13.2652 2 13 2ZM3.5 6C3.5 5.86739 3.55268 5.74021 3.64645 5.64645C3.74021 5.55268 3.86739 5.5 4 5.5H5V4.5C5 4.36739 5.05268 4.24021 5.14645 4.14645C5.24021 4.05268 5.36739 4 5.5 4C5.63261 4 5.75979 4.05268 5.85355 4.14645C5.94732 4.24021 6 4.36739 6 4.5V5.5H7C7.13261 5.5 7.25979 5.55268 7.35355 5.64645C7.44732 5.74021 7.5 5.86739 7.5 6C7.5 6.13261 7.44732 6.25979 7.35355 6.35355C7.25979 6.44732 7.13261 6.5 7 6.5H6V7.5C6 7.63261 5.94732 7.75979 5.85355 7.85355C5.75979 7.94732 5.63261 8 5.5 8C5.36739 8 5.24021 7.94732 5.14645 7.85355C5.05268 7.75979 5 7.63261 5 7.5V6.5H4C3.86739 6.5 3.74021 6.44732 3.64645 6.35355C3.55268 6.25979 3.5 6.13261 3.5 6ZM5 12C4.90105 12.0001 4.80431 11.9708 4.72201 11.9159C4.63971 11.8609 4.57556 11.7828 4.53769 11.6914C4.49981 11.6 4.48991 11.4994 4.50924 11.4023C4.52856 11.3053 4.57624 11.2162 4.64625 11.1462L10.6462 5.14625C10.6927 5.09979 10.7479 5.06294 10.8086 5.0378C10.8692 5.01266 10.9343 4.99972 11 4.99972C11.0657 4.99972 11.1308 5.01266 11.1914 5.0378C11.2521 5.06294 11.3073 5.09979 11.3538 5.14625C11.4002 5.1927 11.4371 5.24786 11.4622 5.30855C11.4873 5.36925 11.5003 5.4343 11.5003 5.5C11.5003 5.5657 11.4873 5.63075 11.4622 5.69145C11.4371 5.75214 11.4002 5.8073 11.3538 5.85375L5.35375 11.8538C5.30728 11.9002 5.25212 11.937 5.19142 11.9621C5.13073 11.9872 5.06568 12.0001 5 12ZM12 11.5H9C8.86739 11.5 8.74021 11.4473 8.64645 11.3536C8.55268 11.2598 8.5 11.1326 8.5 11C8.5 10.8674 8.55268 10.7402 8.64645 10.6464C8.74021 10.5527 8.86739 10.5 9 10.5H12C12.1326 10.5 12.2598 10.5527 12.3536 10.6464C12.4473 10.7402 12.5 10.8674 12.5 11C12.5 11.1326 12.4473 11.2598 12.3536 11.3536C12.2598 11.4473 12.1326 11.5 12 11.5Z"></path></svg>
-              <span>Plus minus to zoom</span>
-            </li>
-          </ul>
+        <div class="world__zoom" role="group" aria-label="Zoom">
+          <button type="button" class="world__zoom-btn" id="zoom-in" aria-label="Zoom in">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21 12C21 12.1989 20.921 12.3897 20.7803 12.5303C20.6397 12.671 20.4489 12.75 20.25 12.75H12.75V20.25C12.75 20.4489 12.671 20.6397 12.5303 20.7803C12.3897 20.921 12.1989 21 12 21C11.8011 21 11.6103 20.921 11.4697 20.7803C11.329 20.6397 11.25 20.4489 11.25 20.25V12.75H3.75C3.55109 12.75 3.36032 12.671 3.21967 12.5303C3.07902 12.3897 3 12.1989 3 12C3 11.8011 3.07902 11.6103 3.21967 11.4697C3.36032 11.329 3.55109 11.25 3.75 11.25H11.25V3.75C11.25 3.55109 11.329 3.36032 11.4697 3.21967C11.6103 3.07902 11.8011 3 12 3C12.1989 3 12.3897 3.07902 12.5303 3.21967C12.671 3.36032 12.75 3.55109 12.75 3.75V11.25H20.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12Z"></path></svg>
+          </button>
+          <span class="world__zoom-pct" id="zoom-pct">100 %</span>
+          <button type="button" class="world__zoom-btn" id="zoom-out" aria-label="Zoom out">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21 12C21 12.1989 20.921 12.3897 20.7803 12.5303C20.6397 12.671 20.4489 12.75 20.25 12.75H3.75C3.55109 12.75 3.36032 12.671 3.21967 12.5303C3.07902 12.3897 3 12.1989 3 12C3 11.8011 3.07902 11.6103 3.21967 11.4697C3.36032 11.329 3.55109 11.25 3.75 11.25H20.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12Z"></path></svg>
+          </button>
         </div>
-      </div>
 
+        <ul class="world__legend" id="model-legend" aria-label="How to move">
+          <li class="world__hint">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.5 4.5V7.5C13.5 8.95869 12.9205 10.3576 11.8891 11.3891C10.8576 12.4205 9.45869 13 8 13C6.54131 13 5.14236 12.4205 4.11091 11.3891C3.07946 10.3576 2.5 8.95869 2.5 7.5V6.5C2.5 6.23478 2.60536 5.98043 2.79289 5.79289C2.98043 5.60536 3.23478 5.5 3.5 5.5C3.76522 5.5 4.01957 5.60536 4.20711 5.79289C4.39464 5.98043 4.5 6.23478 4.5 6.5V7C4.5 7.13261 4.55268 7.25979 4.64645 7.35355C4.74021 7.44732 4.86739 7.5 5 7.5C5.13261 7.5 5.25979 7.44732 5.35355 7.35355C5.44732 7.25979 5.5 7.13261 5.5 7V3.5C5.5 3.23478 5.60536 2.98043 5.79289 2.79289C5.98043 2.60536 6.23478 2.5 6.5 2.5C6.76522 2.5 7.01957 2.60536 7.20711 2.79289C7.39464 2.98043 7.5 3.23478 7.5 3.5V4.5C7.5 4.63261 7.55268 4.75979 7.64645 4.85355C7.74021 4.94732 7.86739 5 8 5C8.13261 5 8.25979 4.94732 8.35355 4.85355C8.44732 4.75979 8.5 4.63261 8.5 4.5V3.5C8.5 3.23478 8.60536 2.98043 8.79289 2.79289C8.98043 2.60536 9.23478 2.5 9.5 2.5C9.76522 2.5 10.0196 2.60536 10.2071 2.79289C10.3946 2.98043 10.5 3.23478 10.5 3.5V4.5C10.5 4.63261 10.5527 4.75979 10.6464 4.85355C10.7402 4.94732 10.8674 5 11 5C11.1326 5 11.2598 4.94732 11.3536 4.85355C11.4473 4.75979 11.5 4.63261 11.5 4.5C11.5 4.23478 11.6054 3.98043 11.7929 3.79289C11.9804 3.60536 12.2348 3.5 12.5 3.5C12.7652 3.5 13.0196 3.60536 13.2071 3.79289C13.3946 3.98043 13.5 4.23478 13.5 4.5Z"></path></svg>
+            <span>Drag to orbit</span>
+          </li>
+          <li class="world__hint">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13.7806 11.9269C13.8505 11.9966 13.906 12.0793 13.9439 12.1705C13.9817 12.2617 14.0012 12.3594 14.0012 12.4581C14.0012 12.5568 13.9817 12.6546 13.9439 12.7457C13.906 12.8369 13.8505 12.9197 13.7806 12.9894L12.9875 13.7806C12.9178 13.8505 12.835 13.906 12.7439 13.9439C12.6527 13.9817 12.555 14.0012 12.4563 14.0012C12.3575 14.0012 12.2598 13.9817 12.1686 13.9439C12.0775 13.906 11.9947 13.8505 11.925 13.7806L8.39 10.245L7.1875 13.3806C7.1875 13.3869 7.1825 13.3938 7.17938 13.4006C7.10285 13.579 6.97554 13.731 6.81328 13.8376C6.65103 13.9441 6.461 14.0006 6.26687 14H6.2175C6.01504 13.9914 5.8201 13.9209 5.65903 13.7979C5.49796 13.675 5.37852 13.5055 5.31687 13.3125L2.05 3.3075C1.99392 3.13252 1.98713 2.94548 2.03038 2.7669C2.07363 2.58832 2.16525 2.4251 2.29518 2.29518C2.4251 2.16525 2.58832 2.07363 2.7669 2.03038C2.94548 1.98713 3.13252 1.99392 3.3075 2.05L13.3125 5.31687C13.5037 5.38084 13.6711 5.50112 13.7928 5.66192C13.9144 5.82273 13.9846 6.01655 13.9941 6.21796C14.0037 6.41936 13.9521 6.61895 13.8462 6.79052C13.7403 6.96209 13.5849 7.09764 13.4006 7.17938L13.3806 7.1875L10.245 8.39188L13.7806 11.9269ZM6 2C6.13261 2 6.25978 1.94732 6.35355 1.85355C6.44732 1.75979 6.5 1.63261 6.5 1.5V1C6.5 0.867392 6.44732 0.740215 6.35355 0.646447C6.25978 0.552678 6.13261 0.5 6 0.5C5.86739 0.5 5.74021 0.552678 5.64645 0.646447C5.55268 0.740215 5.5 0.867392 5.5 1V1.5C5.5 1.63261 5.55268 1.75979 5.64645 1.85355C5.74021 1.94732 5.86739 2 6 2ZM1 6.5H1.5C1.63261 6.5 1.75979 6.44732 1.85355 6.35355C1.94732 6.25978 2 6.13261 2 6C2 5.86739 1.94732 5.74021 1.85355 5.64645C1.75979 5.55268 1.63261 5.5 1.5 5.5H1C0.867392 5.5 0.740215 5.55268 0.646447 5.64645C0.552678 5.74021 0.5 5.86739 0.5 6C0.5 6.13261 0.552678 6.25978 0.646447 6.35355C0.740215 6.44732 0.867392 6.5 1 6.5ZM7.77625 2.4475C7.83501 2.47693 7.89899 2.49448 7.96454 2.49916C8.03009 2.50384 8.09591 2.49555 8.15826 2.47477C8.2206 2.45399 8.27823 2.42112 8.32786 2.37805C8.3775 2.33498 8.41815 2.28255 8.4475 2.22375L8.9475 1.22375C9.00684 1.10515 9.01664 0.967831 8.97474 0.842006C8.93283 0.716181 8.84266 0.612155 8.72406 0.552813C8.60546 0.49347 8.46814 0.483673 8.34232 0.525576C8.21649 0.567478 8.11247 0.657649 8.05313 0.77625L7.55312 1.77625C7.52368 1.83497 7.50609 1.89892 7.50136 1.96444C7.49664 2.02996 7.50487 2.09577 7.5256 2.15811C7.54632 2.22045 7.57912 2.27809 7.62213 2.32775C7.66514 2.3774 7.71751 2.41809 7.77625 2.4475ZM1.77625 7.55312L0.77625 8.05313C0.657649 8.11247 0.567478 8.21649 0.525576 8.34232C0.483673 8.46814 0.49347 8.60546 0.552813 8.72406C0.612155 8.84266 0.716181 8.93283 0.842006 8.97474C0.967831 9.01664 1.10515 9.00684 1.22375 8.9475L2.22375 8.4475C2.28248 8.41812 2.33484 8.37745 2.37785 8.32783C2.42086 8.27821 2.45368 8.22061 2.47442 8.15831C2.49517 8.096 2.50345 8.03023 2.49877 7.96473C2.4941 7.89923 2.47657 7.83529 2.44719 7.77656C2.4178 7.71784 2.37714 7.66547 2.32752 7.62246C2.2779 7.57945 2.2203 7.54664 2.15799 7.52589C2.09569 7.50514 2.02991 7.49687 1.96441 7.50154C1.89891 7.50621 1.83498 7.52374 1.77625 7.55312Z"></path></svg>
+            <span>Click a node to trace it</span>
+          </li>
+          <li class="world__hint">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path transform="translate(2 2)" fill-rule="evenodd" clip-rule="evenodd" d="M12 11V1C12 0.734784 11.8946 0.48043 11.7071 0.292893C11.5196 0.105357 11.2652 0 11 0H1C0.734784 0 0.48043 0.105357 0.292893 0.292893C0.105357 0.48043 0 0.734784 0 1V11C0 11.2652 0.105357 11.5196 0.292893 11.7071C0.48043 11.8946 0.734784 12 1 12H11C11.2652 12 11.5196 11.8946 11.7071 11.7071C11.8946 11.5196 12 11.2652 12 11Z"></path><text x="8" y="8.2" text-anchor="middle" dominant-baseline="central" style="font-family:var(--ds-font-mono);font-size:5.217px;letter-spacing:0.26px;fill:var(--ds-ink-inverse)">esc</text></svg>
+            <span>Esc to let go</span>
+          </li>
+          <li class="world__hint">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M13 2H3C2.73478 2 2.48043 2.10536 2.29289 2.29289C2.10536 2.48043 2 2.73478 2 3V13C2 13.2652 2.10536 13.5196 2.29289 13.7071C2.48043 13.8946 2.73478 14 3 14H13C13.2652 14 13.5196 13.8946 13.7071 13.7071C13.8946 13.5196 14 13.2652 14 13V3C14 2.73478 13.8946 2.48043 13.7071 2.29289C13.5196 2.10536 13.2652 2 13 2ZM3.5 6C3.5 5.86739 3.55268 5.74021 3.64645 5.64645C3.74021 5.55268 3.86739 5.5 4 5.5H5V4.5C5 4.36739 5.05268 4.24021 5.14645 4.14645C5.24021 4.05268 5.36739 4 5.5 4C5.63261 4 5.75979 4.05268 5.85355 4.14645C5.94732 4.24021 6 4.36739 6 4.5V5.5H7C7.13261 5.5 7.25979 5.55268 7.35355 5.64645C7.44732 5.74021 7.5 5.86739 7.5 6C7.5 6.13261 7.44732 6.25979 7.35355 6.35355C7.25979 6.44732 7.13261 6.5 7 6.5H6V7.5C6 7.63261 5.94732 7.75979 5.85355 7.85355C5.75979 7.94732 5.63261 8 5.5 8C5.36739 8 5.24021 7.94732 5.14645 7.85355C5.05268 7.75979 5 7.63261 5 7.5V6.5H4C3.86739 6.5 3.74021 6.44732 3.64645 6.35355C3.55268 6.25979 3.5 6.13261 3.5 6ZM5 12C4.90105 12.0001 4.80431 11.9708 4.72201 11.9159C4.63971 11.8609 4.57556 11.7828 4.53769 11.6914C4.49981 11.6 4.48991 11.4994 4.50924 11.4023C4.52856 11.3053 4.57624 11.2162 4.64625 11.1462L10.6462 5.14625C10.6927 5.09979 10.7479 5.06294 10.8086 5.0378C10.8692 5.01266 10.9343 4.99972 11 4.99972C11.0657 4.99972 11.1308 5.01266 11.1914 5.0378C11.2521 5.06294 11.3073 5.09979 11.3538 5.14625C11.4002 5.1927 11.4371 5.24786 11.4622 5.30855C11.4873 5.36925 11.5003 5.4343 11.5003 5.5C11.5003 5.5657 11.4873 5.63075 11.4622 5.69145C11.4371 5.75214 11.4002 5.8073 11.3538 5.85375L5.35375 11.8538C5.30728 11.9002 5.25212 11.937 5.19142 11.9621C5.13073 11.9872 5.06568 12.0001 5 12ZM12 11.5H9C8.86739 11.5 8.74021 11.4473 8.64645 11.3536C8.55268 11.2598 8.5 11.1326 8.5 11C8.5 10.8674 8.55268 10.7402 8.64645 10.6464C8.74021 10.5527 8.86739 10.5 9 10.5H12C12.1326 10.5 12.2598 10.5527 12.3536 10.6464C12.4473 10.7402 12.5 10.8674 12.5 11C12.5 11.1326 12.4473 11.2598 12.3536 11.3536C12.2598 11.4473 12.1326 11.5 12 11.5Z"></path></svg>
+            <span>Plus minus to zoom</span>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
@@ -942,6 +1021,7 @@ const P = {
   spreadX: 1.32, spreadY: 1.32, spreadZ: 1.32,
 };
 const BLOB_SEG = 26;
+const FIT = 1.15;   // >1 lets the graph spill a little past its frame, under the glass
 
 function mountWorld(host, corpus, opts = {}) {
   const par = { ...P, ...(opts.params || {}) };
@@ -1074,14 +1154,28 @@ function mountWorld(host, corpus, opts = {}) {
   const ctx = canvas.getContext('2d');
   const DPR = Math.min(2, devicePixelRatio || 1);
   let VW = 0, VH = 0, focal = 0;
+  // The canvas covers the page, but the headline and chat cover part of it.
+  // The graph is centred on, and sized to, the part left uncovered.
+  let FX = 0, FY = 0, FS = 1;
   function resize() {
     const r = stage.getBoundingClientRect();
     VW = Math.max(1, r.width); VH = Math.max(1, r.height);
     canvas.width = Math.round(VW * DPR); canvas.height = Math.round(VH * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const f = opts.frameEl?.getBoundingClientRect();
+    if (f && f.width > 1 && f.height > 1) {
+      FX = f.left - r.left + f.width / 2;
+      FY = f.top - r.top + f.height / 2;
+      FS = Math.min(f.width, f.height);
+    } else {
+      FX = VW / 2; FY = VH / 2; FS = VH;
+    }
   }
   resize();
-  const ro = new ResizeObserver(resize); ro.observe(stage);
+  // the frame can change on its own, e.g. when the headline font arrives and rewraps
+  const ro = new ResizeObserver(resize);
+  ro.observe(stage);
+  if (opts.frameEl) ro.observe(opts.frameEl);
 
   // eight pre-blurred discs stand in for out-of-focus nodes
   const DISCS = (() => {
@@ -1134,7 +1228,7 @@ function mountWorld(host, corpus, opts = {}) {
 
   /* ---- 4e. project --------------------------------------- */
   function project(t) {
-    focal = (0.5 * VH) / Math.tan((par.fov * Math.PI) / 360);
+    focal = (0.5 * FS * FIT) / Math.tan((par.fov * Math.PI) / 360);
     const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
     const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
     const drift = reduced ? 0 : par.drift;
@@ -1154,8 +1248,8 @@ function mountWorld(host, corpus, opts = {}) {
       n.depth = depth;
       if (depth < 40) { n.vis = false; continue; }
       const k = focal / depth;
-      n.px = rx * k + 0.5 * VW;
-      n.py = -ry * k + 0.5 * VH;
+      n.px = rx * k + FX;
+      n.py = -ry * k + FY;
       n.s = k;
       n.vis = true;
     }
@@ -1287,7 +1381,7 @@ function mountWorld(host, corpus, opts = {}) {
       const r = Math.max(0.8, (n.kind === 'hub' ? 9.5 * par.hubSize : 5.2 * par.nodeSize) * n.sizeMul * grow * n.s);
       const spread = 0.5 * blur;
       const reach = Math.sqrt(r * r + spread * spread);
-      const edgeFade = clamp((0.62 * VH - reach) / (0.32 * VH), 0, 1);
+      const edgeFade = clamp((0.62 * FS - reach) / (0.32 * FS), 0, 1);
       if (edgeFade <= 0.01) continue;
       alpha *= edgeFade;
       const pad = 60 + reach;
@@ -1951,6 +2045,7 @@ syncArrows();
    ============================================================ */
 const stageEl  = document.getElementById('stage');
 const hosts    = [...document.querySelectorAll('.world__host')];
+const frameEl  = document.getElementById('frame');
 const resetBtn = document.getElementById('reset');
 const zoomIn   = document.getElementById('zoom-in');
 const zoomOut  = document.getElementById('zoom-out');
@@ -2003,6 +2098,7 @@ function select(key) {
   const api = mountWorld(host, corpus, {
     label: `${subject} drawn as a connected graph: the domains of Indian commercial law it runs on, with the concepts and specimen documents that hang off them, turning slowly in depth.`,
     interactive: true,
+    frameEl,
     params: NARROW.matches ? { labelDensityMul: 0.42, docLabels: false, labelSize: 0.92 } : {},
     onReady: () => {
       host.dataset.ready = 'true';
