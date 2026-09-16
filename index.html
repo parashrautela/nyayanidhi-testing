@@ -28,6 +28,7 @@
   --ds-chrome: #1a1817;
   --ds-surface-alt: #fff;
   --ds-rule-strong: #00000040;
+  --ds-rule-panel: #0000001a;
   --ds-focus: #1a1817;
 
   --ds-font-body: "Inter", ui-sans-serif, -apple-system, "Helvetica Neue", sans-serif;
@@ -187,46 +188,25 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .tabs[data-back="false"] .tabs__arrow--start { opacity: 0; visibility: hidden; }
 
 /* ============================================================
-   5. WORLD — the three panels
+   5. WORLD — chat beside the graph
    ============================================================ */
 .world {
   max-width: 1120px;
   margin: var(--ds-space-4) auto 0;
   gap: var(--ds-space-2);
-  grid-template-rows: 396px 268px;
-  grid-template-columns: 268px minmax(0, 1fr);
+  grid-template-rows: 680px;
+  grid-template-columns: 320px minmax(0, 1fr);
   display: grid;
 }
-.world__index, .world__readout, .world__card {
+.world__chat, .world__card {
   border: 1px solid var(--ds-rule-strong);
   background: var(--ds-surface-alt);
   border-radius: 24px;
   min-width: 0; min-height: 0;
   overflow: hidden;
 }
-.world__index { grid-area: 1/1; }
-.world__readout { grid-area: 2/1; }
-.world__card { flex-direction: column; grid-area: 1/2/3; display: flex; position: relative; }
-.world__scroll {
-  overscroll-behavior: contain;
-  height: 100%;
-  margin-right: 8px;
-  padding: 15px;
-  overflow-y: auto;
-}
-.world__scroll::-webkit-scrollbar { width: 4px; }
-.world__scroll::-webkit-scrollbar-track {
-  background: color-mix(in srgb, var(--ds-ink) 10%, transparent);
-  border-radius: 24px;
-  margin: 24px 0;
-}
-.world__scroll::-webkit-scrollbar-thumb { background: var(--ds-chrome); border-radius: 24px; }
-@supports not selector(::-webkit-scrollbar) {
-  .world__scroll {
-    scrollbar-width: thin;
-    scrollbar-color: var(--ds-chrome) color-mix(in srgb, var(--ds-ink) 10%, transparent);
-  }
-}
+.world__chat { grid-area: 1/1; }
+.world__card { flex-direction: column; grid-area: 1/2; display: flex; position: relative; }
 .world__stage { flex: 1; min-height: 0; position: relative; overflow: hidden; }
 .world__stage:focus-visible { outline-offset: -3px; }
 .world__host {
@@ -338,94 +318,146 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .world__hint svg { flex: none; width: 16px; height: 16px; display: block; }
 
 /* ============================================================
-   7. INDEX + READOUT
+   7. CHAT
    ============================================================ */
-.index__title, .index__group, .index__item, .index__empty,
-.readout__empty, .readout__name, .readout__meta, .readout__group, .readout__more {
+.chat { height: 100%; min-height: 0; flex-direction: column; display: flex; }
+.chat__log {
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
+  margin-right: 8px;
+  padding: 15px;
+  overflow-y: auto;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  display: flex;
+}
+.chat__log::-webkit-scrollbar { width: 4px; }
+.chat__log::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--ds-ink) 10%, transparent);
+  border-radius: 24px;
+  margin: 24px 0;
+}
+.chat__log::-webkit-scrollbar-thumb { background: var(--ds-chrome); border-radius: 24px; }
+@supports not selector(::-webkit-scrollbar) {
+  .chat__log {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ds-chrome) color-mix(in srgb, var(--ds-ink) 10%, transparent);
+  }
+}
+
+.msg {
   font-family: var(--ds-font-body);
   font-weight: 300;
   font-size: var(--ds-text-body);
   line-height: var(--ds-leading-body);
   letter-spacing: var(--ds-track-body);
   color: var(--ds-chrome);
-  margin: 0;
+  max-width: 100%;
 }
-.index__title, .index__count, .index__empty,
-.readout__empty, .readout__meta, .readout__more { color: var(--ds-ink-faint); }
-.index__group, .readout__group { margin-top: 24px; }
-.index__list {
-  margin: var(--ds-space-1) 0 0;
-  row-gap: var(--ds-space-2);
-  padding: 0;
-  list-style: none;
-  display: grid;
-}
-.index__list[hidden] { display: none; }
-.index__list--concepts { row-gap: var(--ds-space-1); padding-left: 24px; }
-.index__list--specimens { row-gap: var(--ds-space-1); padding-left: 16px; }
-.index__row { align-items: center; gap: var(--ds-space-1); display: flex; }
-.index__toggle {
-  width: 16px; height: 16px;
-  color: var(--ds-chrome);
-  cursor: pointer;
-  background: 0 0;
-  border: 0;
-  border-radius: 4px;
-  flex: none;
-  padding: 0;
-  display: flex;
-}
-.index__chevron {
-  width: 16px; height: 16px;
-  transition: transform var(--ds-dur-fast) var(--ds-ease);
-  display: block;
-  transform: rotate(90deg);
-}
-.index__toggle[aria-expanded="true"] .index__chevron { transform: rotate(180deg); }
-.index__item {
-  border-radius: var(--ds-radius-lg);
-  text-align: left;
-  overflow-wrap: anywhere;
-  cursor: pointer;
-  transition: background-color var(--ds-dur-fast) var(--ds-ease), color var(--ds-dur-fast) var(--ds-ease);
-  background: 0 0;
-  border: 0;
-  align-items: baseline;
-  gap: 4px;
-  padding: 4px 8px;
-  display: inline-flex;
-}
-.index__item:hover { background: var(--ds-bg); }
-.index__item[aria-current="true"] {
+.msg p { margin: 0; overflow-wrap: anywhere; }
+.msg p + p { margin-top: 4px; }
+.msg--user {
+  align-self: flex-end;
   background: var(--ds-inverse);
   color: var(--ds-ink-inverse);
-  padding: 4px 16px;
+  border-radius: 16px 16px 4px 16px;
+  max-width: 85%;
+  padding: 7px 14px;
 }
-.index__item[aria-current="true"] .index__count { color: var(--ds-ink-inverse-soft); }
-.index__item--hub { padding: 0; }
-.index__item--hub:hover { background: 0 0; }
-.index__item--hub[aria-current="true"] { margin: -4px -16px; padding: 4px 16px; }
-.readout__name { overflow-wrap: anywhere; font-weight: 400; }
-.readout__meta { margin-top: 4px; }
-.readout__touches {
-  margin: var(--ds-space-1) 0 0;
-  row-gap: var(--ds-space-1);
+.msg--bot { align-self: stretch; }
+.msg__meta {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-micro);
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+  margin-bottom: 4px;
+  display: block;
+}
+.msg__name { font-weight: 400; }
+.msg__soft { color: var(--ds-ink-faint); }
+
+.chat__chips { flex-wrap: wrap; gap: 4px; margin-top: 8px; display: flex; }
+.chat__chip {
+  border: 1px solid var(--ds-rule-strong);
+  border-radius: var(--ds-radius-lg);
+  background: 0 0;
+  color: var(--ds-chrome);
+  font-family: var(--ds-font-body);
+  font-weight: 300;
+  font-size: var(--ds-text-body-sm);
+  letter-spacing: var(--ds-track-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--ds-dur-fast) var(--ds-ease), color var(--ds-dur-fast) var(--ds-ease), border-color var(--ds-dur-fast) var(--ds-ease);
+  padding: 3px 12px;
+  line-height: 1.45;
+}
+.chat__chip:hover {
+  background: var(--ds-inverse);
+  border-color: var(--ds-inverse);
+  color: var(--ds-ink-inverse);
+}
+.chat__tag {
+  font-family: var(--ds-font-mono);
+  font-size: 10px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--ds-ink-faint);
+  margin-left: 6px;
+}
+.chat__chip:hover .chat__tag { color: var(--ds-ink-inverse-soft); }
+
+.chat__form {
+  border-top: 1px solid var(--ds-rule-panel);
+  align-items: center;
+  gap: 8px;
+  padding: 12px 15px;
+  display: flex;
+  flex: none;
+}
+.chat__input {
+  border: 1px solid var(--ds-chrome);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-bg);
+  height: 38px;
+  min-width: 0;
+  flex: 1;
+  color: var(--ds-chrome);
+  font-family: var(--ds-font-body);
+  font-weight: 300;
+  font-size: var(--ds-text-body);
+  letter-spacing: var(--ds-track-body);
+  padding: 0 16px;
+}
+.chat__input::placeholder { color: var(--ds-ink-faint); }
+.chat__send {
+  background: var(--ds-inverse);
+  width: 32px;
+  height: 32px;
+  flex: none;
+  color: var(--ds-ink-inverse);
+  cursor: pointer;
+  border: 0;
+  border-radius: 50%;
+  justify-content: center;
+  align-items: center;
   padding: 0;
-  list-style: none;
-  display: grid;
+  transition: opacity var(--ds-dur-fast) var(--ds-ease);
+  display: flex;
 }
-.readout__tag { font-size: var(--ds-text-body-sm); color: var(--ds-ink-faint); }
-.readout__more { padding-left: 8px; }
+.chat__send svg { width: 22px; height: 22px; display: block; }
+.chat__send:disabled { opacity: .4; cursor: default; }
 
 /* ============================================================
    8. RESPONSIVE
    ============================================================ */
 @media (max-width: 1000px) {
   .world { grid-template-rows: none; grid-template-columns: minmax(0, 1fr); }
-  .world__index, .world__readout, .world__card { grid-area: auto; }
+  .world__chat, .world__card { grid-area: auto; }
   .world__card { order: 1; }
-  .world__index { order: 2; height: 320px; }
-  .world__readout { order: 3; min-height: 88px; }
+  .world__chat { order: 2; height: 440px; }
   .world__stage { flex: none; height: clamp(440px, 60vh, 640px); }
 }
 @media (max-width: 767px) {
@@ -459,13 +491,16 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
     <p class="sr-only" aria-live="polite" id="model-status"></p>
 
     <div class="world">
-      <!-- Index -->
-      <div class="world__index">
-        <div class="world__scroll">
-          <nav class="index" id="index" aria-label="Index">
-            <p class="index__title">Index</p>
-            <p class="index__empty">The world is being built.</p>
-          </nav>
+      <!-- Chat -->
+      <div class="world__chat">
+        <div class="chat">
+          <div class="chat__log" id="chat-log" role="log" aria-live="polite" aria-label="Conversation"></div>
+          <form class="chat__form" id="chat-form" autocomplete="off">
+            <input class="chat__input" id="chat-input" type="text" placeholder="Ask about this world…" aria-label="Ask about this world" />
+            <button class="chat__send" type="submit" aria-label="Send">
+              <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+            </button>
+          </form>
         </div>
       </div>
 
@@ -508,12 +543,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
         </div>
       </div>
 
-      <!-- Readout -->
-      <div class="world__readout">
-        <div class="world__scroll" id="readout">
-          <p class="readout__empty">Trace a node to read it here.</p>
-        </div>
-      </div>
     </div>
   </div>
 </section>
@@ -1445,167 +1474,382 @@ function mountWorld(host, corpus, opts = {}) {
 }
 
 /* ============================================================
-   5. PANELS
+   5. CHAT — every answer is read off the graph, nothing invented
    ============================================================ */
-const CHEVRON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false" class="index__chevron"><path d="M12.9619 7.69125C12.924 7.78262 12.86 7.86072 12.7778 7.91568C12.6956 7.97064 12.5989 7.99998 12.5 8H3.5C3.40105 8.00008 3.30431 7.9708 3.22201 7.91586C3.13971 7.86092 3.07556 7.78281 3.03769 7.6914C2.99981 7.59998 2.98991 7.49939 3.00924 7.40235C3.02856 7.3053 3.07624 7.21618 3.14625 7.14625L7.64625 2.64625C7.69269 2.59976 7.74783 2.56288 7.80853 2.53772C7.86923 2.51256 7.93429 2.49961 8 2.49961C8.06571 2.49961 8.13077 2.51256 8.19147 2.53772C8.25217 2.56288 8.30731 2.59976 8.35375 2.64625L12.8538 7.14625C12.9237 7.21621 12.9712 7.30534 12.9905 7.40235C13.0097 7.49936 12.9998 7.5999 12.9619 7.69125Z"></path></svg>';
-const KIND_LABEL = { hub: 'Domain', concept: 'Concept', doc: 'Specimen document' };
-const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+const statusEl = document.getElementById('model-status');
+const logEl    = document.getElementById('chat-log');
+const formEl   = document.getElementById('chat-form');
+const inputEl  = document.getElementById('chat-input');
 
-const indexEl   = document.getElementById('index');
-const readoutEl = document.getElementById('readout');
-const statusEl  = document.getElementById('model-status');
+const norm = (s) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
+const KIND_WORD = { hub: 'Domain', concept: 'Concept', doc: 'Specimen document' };
 
-const openDomains = new Map();   // hub -> explicitly opened/folded by the reader
+// a trace the chat asked for should not be echoed back to the chat as news
+let chatDrove = false;
+function quietly(fn) { chatDrove = true; try { fn(); } finally { chatDrove = false; } }
 
-function renderIndex(corpus, traced, onTrace, onRelease) {
-  indexEl.textContent = '';
-  const title = document.createElement('p');
-  title.className = 'index__title'; title.textContent = 'Index';
-  indexEl.append(title);
-
-  if (!corpus) {
-    const empty = document.createElement('p');
-    empty.className = 'index__empty'; empty.textContent = 'The world is being built.';
-    indexEl.append(empty);
-    return;
+function scrollLog() { logEl.scrollTop = logEl.scrollHeight; }
+function bubble(who) {
+  const el = document.createElement('div');
+  el.className = `msg msg--${who}`;
+  logEl.append(el);
+  return el;
+}
+function said(text) {
+  const p = document.createElement('p');
+  p.textContent = text;
+  bubble('user').append(p);
+  scrollLog();
+}
+function reply(spec) {
+  const el = bubble('bot');
+  if (spec.meta) {
+    const m = document.createElement('span');
+    m.className = 'msg__meta';
+    m.textContent = spec.meta;
+    el.append(m);
   }
-
-  const item = (name, label, extra, count) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'index__item' + (extra ? ' ' + extra : '');
-    const current = traced === name;
-    if (current) b.setAttribute('aria-current', 'true');
-    b.append(document.createTextNode(label));
-    if (count !== undefined) {
-      const c = document.createElement('span');
-      c.className = 'index__count'; c.textContent = `(${count})`;
-      b.append(c);
-    }
-    b.addEventListener('click', () => (current ? onRelease() : onTrace(name)));
-    return b;
-  };
-
-  const domainsHead = document.createElement('p');
-  domainsHead.className = 'index__group'; domainsHead.id = 'index-domains';
-  domainsHead.textContent = 'Domains';
-  const domains = document.createElement('ul');
-  domains.className = 'index__list';
-  domains.setAttribute('aria-labelledby', 'index-domains');
-
-  for (const c of corpus.clusters) {
-    const auto = traced !== null && (traced === c.hub || c.items.includes(traced));
-    const open = openDomains.get(c.hub) ?? auto;
-    const listId = `index-${slug(c.hub)}`;
-
-    const li = document.createElement('li');
-    li.className = 'index__domain';
-
+  if (spec.name) {
+    const p = document.createElement('p');
+    p.className = 'msg__name';
+    p.textContent = spec.name;
+    el.append(p);
+  }
+  for (const line of spec.lines || []) {
+    const p = document.createElement('p');
+    if (typeof line === 'string') p.textContent = line;
+    else { if (line.soft) p.className = 'msg__soft'; p.textContent = line.text; }
+    el.append(p);
+  }
+  if (spec.chips && spec.chips.length) {
     const row = document.createElement('div');
-    row.className = 'index__row';
-
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'index__toggle';
-    toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-controls', listId);
-    toggle.setAttribute('aria-label', `${open ? 'Fold' : 'Open'} ${c.hub}`);
-    toggle.innerHTML = CHEVRON;
-    toggle.addEventListener('click', () => {
-      openDomains.set(c.hub, !open);
-      renderIndex(corpus, traced, onTrace, onRelease);
-    });
-
-    row.append(toggle, item(c.hub, c.hub, 'index__item--hub', c.items.length));
-
-    const concepts = document.createElement('ul');
-    concepts.className = 'index__list index__list--concepts';
-    concepts.id = listId;
-    concepts.hidden = !open;
-    for (const name of c.items) {
-      const cli = document.createElement('li');
-      cli.append(item(name, name));
-      concepts.append(cli);
+    row.className = 'chat__chips';
+    for (const c of spec.chips) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chat__chip';
+      b.append(document.createTextNode(c.label));
+      if (c.tag) {
+        const t = document.createElement('span');
+        t.className = 'chat__tag';
+        t.textContent = c.tag;
+        b.append(t);
+      }
+      b.addEventListener('click', () => submit(c.value ?? c.label));
+      row.append(b);
     }
-
-    li.append(row, concepts);
-    domains.append(li);
+    el.append(row);
   }
-
-  const specHead = document.createElement('p');
-  specHead.className = 'index__group'; specHead.id = 'index-specimens';
-  specHead.textContent = 'Specimens';
-  const specs = document.createElement('ul');
-  specs.className = 'index__list index__list--specimens';
-  specs.setAttribute('aria-labelledby', 'index-specimens');
-  for (const d of corpus.documents) {
-    const li = document.createElement('li');
-    li.append(item(d.t, d.t.split(' — ')[0]));
-    specs.append(li);
-  }
-
-  indexEl.append(domainsHead, domains, specHead, specs);
+  scrollLog();
 }
 
-function renderReadout(desc, onHop) {
-  readoutEl.textContent = '';
-  if (!desc) {
-    const p = document.createElement('p');
-    p.className = 'readout__empty'; p.textContent = 'Trace a node to read it here.';
-    readoutEl.append(p);
-    return;
+/* ---- the names this world actually contains -------------- */
+function worldNames() {
+  const out = [];
+  for (const c of current.corpus.clusters) {
+    out.push({ name: c.hub, kind: 'hub' });
+    for (const i of c.items) out.push({ name: i, kind: 'concept' });
   }
-  const [title, ...rest] = desc.name.split(' — ');
+  for (const d of current.corpus.documents) out.push({ name: d.t, kind: 'doc' });
+  return out;
+}
+function findNames(q, limit = 10) {
+  const nq = norm(q);
+  if (!nq) return [];
+  const all = worldNames();
+  const exact = all.filter(n => norm(n.name) === nq);
+  if (exact.length) return exact;
+  const toks = nq.split(' ').filter(t => t.length > 2);
+  const buckets = [
+    all.filter(n => norm(n.name).startsWith(nq)),
+    toks.length ? all.filter(n => { const s = norm(n.name); return toks.every(t => s.includes(t)); }) : [],
+    all.filter(n => norm(n.name).includes(nq)),
+  ];
+  const seen = new Set(), out = [];
+  for (const b of buckets) for (const n of b) {
+    if (seen.has(n.name)) continue;
+    seen.add(n.name);
+    out.push(n);
+  }
+  return out.slice(0, limit);
+}
+function exactName(q) {
+  const nq = norm(q);
+  return worldNames().find(n => norm(n.name) === nq) || null;
+}
+
+/* Names in this corpus contain "to" and "and" ("Agreement to Sell",
+   "Obligations and Controls"), so a path query cannot just split on the
+   first separator: try each one and keep the split where both halves
+   resolve to real names. */
+function parsePath(text) {
+  let t = text.trim().replace(/[?.!]+$/, '');
+  const lead = t.match(/^(?:(?:what\s+is|what\s+s|whats)\s+)?(?:the\s+)?(?:shortest\s+)?(?:path|route|way|link|connection)\s+/i)
+            || t.match(/^how\s+(?:do(?:es)?|is|are)\s+/i)
+            || t.match(/^connect(?:s|ed)?\s+/i);
+  let body = lead ? t.slice(lead[0].length) : t;
+  body = body.replace(/^(?:from|between)\s+/i, '')
+             .replace(/\s+(?:connect(?:ed)?|linked|related|tied)\s+(?=(?:to|with)\b)/i, ' ');
+  for (const sep of [...body.matchAll(/\s+(?:to|and|with|\u2192)\s+/gi)]) {
+    const a = body.slice(0, sep.index).trim();
+    const b = body.slice(sep.index + sep[0].length).trim();
+    if (!a || !b) continue;
+    const ra = findNames(a), rb = findNames(b);
+    if (ra.length && rb.length && ra[0].name !== rb[0].name) return [ra[0].name, rb[0].name];
+  }
+  return null;
+}
+
+const touchChips = (touches, limit = 12) => touches.slice(0, limit).map(t => ({
+  label: t.name,
+  tag: t.contested ? 'contested' : t.spine ? 'spine' : undefined,
+}));
+
+/* ---- read one node back ---------------------------------- */
+function describeNode(node, meta) {
+  const d = current.api.describe(node);
+  const [title, ...rest] = d.name.split(' — ');
   const formRaw = rest.join(' — ').trim();
   const form = formRaw && formRaw !== 'Specimen' ? formRaw : null;
 
-  const aside = document.createElement('aside');
-  aside.className = 'readout';
-  aside.setAttribute('aria-label', 'Traced node');
-
-  const nameEl = document.createElement('p');
-  nameEl.className = 'readout__name'; nameEl.textContent = title;
-
-  const metaEl = document.createElement('p');
-  metaEl.className = 'readout__meta';
-  metaEl.textContent = (form ? `${form}. ` : '') + (desc.kind === 'hub'
+  const what = d.kind === 'hub'
     ? 'A domain of law.'
-    : `${KIND_LABEL[desc.kind]}${desc.domain ? ` in ${desc.domain}` : ''}.`);
+    : d.kind === 'doc'
+      ? `A specimen document${form ? `, ${form.toLowerCase()}` : ''}.`
+      : `A concept${d.domain ? ` in ${d.domain}` : ''}.`;
 
-  aside.append(nameEl, metaEl);
+  const lines = [what, d.touches.length
+    ? `Touches ${plural(d.touches.length, 'thing')} in this view.`
+    : 'Touches nothing in this view.'];
+  if (d.touches.length > 12) lines.push({ text: 'The first twelve:', soft: true });
 
-  if (!desc.touches.length) {
-    const none = document.createElement('p');
-    none.className = 'readout__meta'; none.textContent = 'Touches nothing in this view.';
-    aside.append(none);
-  } else {
-    const head = document.createElement('p');
-    head.className = 'readout__group'; head.textContent = 'Touches';
-    const list = document.createElement('ul');
-    list.className = 'readout__touches';
-    for (const t of desc.touches.slice(0, 10)) {
-      const li = document.createElement('li');
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'index__item';
-      b.append(document.createTextNode(t.name));
-      for (const tag of ['contested', 'spine']) if (t[tag]) {
-        const s = document.createElement('span');
-        s.className = 'readout__tag'; s.textContent = tag;
-        b.append(s);
-      }
-      b.addEventListener('click', () => onHop(t.name));
-      li.append(b);
-      list.append(li);
+  reply({
+    meta: meta ? `${KIND_WORD[d.kind]} · ${meta}` : KIND_WORD[d.kind],
+    name: title,
+    lines,
+    chips: touchChips(d.touches),
+  });
+}
+function traceAndTell(name) {
+  const node = current.api.node(name);
+  if (!node) return false;
+  quietly(() => current.api.trace(name));
+  showZoom();
+  describeNode(node);
+  return true;
+}
+
+/* ---- shortest way between two names ---------------------- */
+function pathBetween(aName, bName) {
+  const start = current.api.node(aName), goal = current.api.node(bName);
+  if (!start || !goal) return null;
+  if (start === goal) return [start.name];
+  const prev = new Map([[start, null]]);
+  const queue = [start];
+  let found = false;
+  while (queue.length && !found) {
+    const n = queue.shift();
+    for (const m of n.adj) {
+      if (prev.has(m)) continue;
+      prev.set(m, n);
+      if (m === goal) { found = true; break; }
+      queue.push(m);
     }
-    if (desc.touches.length > 10) {
-      const more = document.createElement('li');
-      more.className = 'readout__more';
-      more.textContent = `and ${desc.touches.length - 10} more`;
-      list.append(more);
-    }
-    aside.append(head, list);
   }
-  readoutEl.append(aside);
+  if (!prev.has(goal)) return null;
+  const chain = [];
+  for (let n = goal; n; n = prev.get(n)) chain.push(n.name);
+  return chain.reverse();
+}
+
+/* ---- the canned asks ------------------------------------- */
+const industryOf = (key) => DATA.industries.find(i => i.key === key);
+const conceptCount = (c) => c.clusters.reduce((n, x) => n + x.items.length, 0);
+
+function listDomains() {
+  const cs = current.corpus.clusters;
+  reply({
+    meta: 'Domains',
+    lines: [`${plural(cs.length, 'domain')} hold this world up.`],
+    chips: cs.map(c => ({ label: c.hub, tag: String(c.items.length) })),
+  });
+}
+function listSpecimens() {
+  const ds = current.corpus.documents;
+  reply({
+    meta: 'Specimens',
+    lines: [`${plural(ds.length, 'specimen')} hang off it.`],
+    chips: ds.map(d => ({ label: d.t.split(' — ')[0], value: d.t })),
+  });
+}
+function listContested() {
+  const cs = current.corpus.contested;
+  if (!cs.length) return reply({ meta: 'Contested', lines: ['Nothing is contested in this world.'] });
+  reply({
+    meta: 'Contested',
+    lines: [`${plural(cs.length, 'pair')} pull against each other here.`],
+    chips: cs.map(([a, b]) => ({ label: `${a} ↔ ${b}`, value: a })),
+  });
+}
+function overview() {
+  const c = current.corpus;
+  reply({
+    meta: industryOf(current.key).label,
+    lines: [
+      `${plural(c.clusters.length, 'domain')}, ${plural(conceptCount(c), 'concept')}, ${plural(c.documents.length, 'specimen')}.`,
+      `${plural(c.bridges.length, 'bridge')} between domains, ${plural(c.cross.length, 'cross-link')} between concepts, ${plural(c.contested.length, 'contested pair')}.`,
+    ],
+    chips: [{ label: 'domains' }, { label: 'specimens' }, { label: 'contested' }],
+  });
+}
+function listIndustries() {
+  reply({
+    meta: 'Industries',
+    lines: ['Fifteen worlds. Name one and the graph switches.'],
+    chips: DATA.industries.map(i => ({ label: i.label, value: 'switch to ' + i.label })),
+  });
+}
+function help() {
+  reply({
+    meta: 'What I can do',
+    lines: [
+      'I read the graph beside you and nothing else, so every answer comes off it.',
+      'Name anything to trace it, ask for the path between two names, or try one of these.',
+    ],
+    chips: [
+      { label: 'overview' }, { label: 'domains' }, { label: 'specimens' },
+      { label: 'contested' }, { label: 'industries' },
+      { label: 'path from Stamp Duty to Sale Deed' }, { label: 'let go' },
+    ],
+  });
+}
+function matchIndustry(q) {
+  const c = norm(q);
+  if (!c) return null;
+  return DATA.industries.find(i => norm(i.label) === c)
+    || (c.length >= 4 ? DATA.industries.find(i => norm(i.label).startsWith(c)) : null)
+    || (c.length >= 5 ? DATA.industries.find(i => norm(i.label).includes(c)) : null);
+}
+function goTo(ind) {
+  if (ind.key === current.key) return reply({ lines: [`Already in ${ind.label}.`] });
+  select(ind.key);
+}
+
+/* ---- route one message ----------------------------------- */
+function answer(text) {
+  const q = norm(text);
+  if (!q) return;
+  if (!current) return reply({ lines: ['The world is still being built. One moment.'] });
+
+  if (/^(help|\?+|what can you do|commands|how does this work)$/.test(q)) return help();
+  if (/^(overview|summary|stats|what s here|what is here|whats here)$/.test(q)) return overview();
+  if (/^(domains?|list domains?|show domains?|what domains?( are here)?)$/.test(q)) return listDomains();
+  if (/^((list |show )?(specimens?|documents?|docs|papers))$/.test(q)) return listSpecimens();
+  if (/^(contested|conflicts?|disagreements?|tensions?|what (is )?contested|what fights)$/.test(q)) return listContested();
+  if (/^(industries|list industries|tabs|worlds)$/.test(q)) return listIndustries();
+  if (/^(reset|clear|let go|release|deselect|stop)$/.test(q)) {
+    quietly(() => current.api.release());
+    showZoom();
+    return reply({ lines: ['Let go. Nothing is traced.'] });
+  }
+
+  // an explicit industry switch
+  const sw = text.match(/^(?:switch|go|jump|move)\s+(?:to|into)\s+(.+)$/i) || text.match(/^(?:load|open)\s+(.+)$/i);
+  if (sw) {
+    const ind = matchIndustry(sw[1]);
+    if (ind) return goTo(ind);
+    return reply({
+      lines: [`There is no industry called "${sw[1].trim()}".`],
+      chips: DATA.industries.map(i => ({ label: i.label, value: 'switch to ' + i.label })),
+    });
+  }
+
+  // strip the question framing once, up front
+  const stripped = q
+    .replace(/^(what s|whats|what is|what are|who is|tell me about|about|show me|show|find|search for|search|trace|look up|explain|define)\s+/, '')
+    .replace(/\?+$/, '').trim();
+
+  // an exact name wins outright, before anything tries to read the words
+  const dead_on = exactName(stripped) || exactName(q);
+  if (dead_on) return void traceAndTell(dead_on.name);
+
+  // a path between two names
+  const pair = parsePath(text);
+  if (pair) {
+    const [from, to] = pair;
+    const chain = pathBetween(from, to);
+    if (!chain) return reply({ lines: [`${from} and ${to} never meet in this view.`] });
+    quietly(() => current.api.trace(from));
+    showZoom();
+    return reply({
+      meta: plural(chain.length - 1, 'hop'),
+      lines: [chain.join('  →  ')],
+      chips: chain.map(n => ({ label: n })),
+    });
+  }
+
+  // a name in the world
+  let hits = findNames(stripped || q);
+  if (!hits.length && stripped !== q) hits = findNames(q);
+  if (hits.length === 1) return void traceAndTell(hits[0].name);
+  if (hits.length > 1) {
+    return reply({
+      meta: plural(hits.length, 'match', 'matches'),
+      lines: ['Which one?'],
+      chips: hits.map(h => ({
+        label: h.name,
+        tag: h.kind === 'hub' ? 'domain' : h.kind === 'doc' ? 'specimen' : undefined,
+      })),
+    });
+  }
+
+  // only once nothing in the world matched is a bare industry name worth trying
+  const ind = matchIndustry(q);
+  if (ind) return goTo(ind);
+
+  reply({
+    lines: [
+      `Nothing in this world is called "${text.trim()}".`,
+      { text: 'I only know the names drawn on the graph in front of you.', soft: true },
+    ],
+    chips: [{ label: 'domains' }, { label: 'specimens' }, { label: 'help' }],
+  });
+}
+
+function submit(text) {
+  const t = (text || '').trim();
+  if (!t) return;
+  said(t);
+  answer(t);
+}
+function send() {
+  const v = inputEl.value;
+  inputEl.value = '';
+  submit(v);
+}
+formEl.addEventListener('submit', (e) => { e.preventDefault(); send(); });
+// implicit submission is not guaranteed everywhere, so take Enter directly too
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.isComposing) return;
+  e.preventDefault();
+  send();
+});
+
+function greet() {
+  logEl.textContent = '';
+  const c = current.corpus;
+  reply({
+    meta: industryOf(current.key).label,
+    lines: [
+      `${plural(c.clusters.length, 'domain')}, ${plural(conceptCount(c), 'concept')} and ${plural(c.documents.length, 'specimen')} are drawn beside you.`,
+      'Name any of them and I will trace it. Click a node and I will read it back.',
+    ],
+    chips: [
+      { label: 'domains' }, { label: 'specimens' },
+      { label: 'contested' }, { label: 'overview' }, { label: 'help' },
+    ],
+  });
 }
 
 /* ============================================================
@@ -1690,14 +1934,7 @@ function showZoom() {
   zoomOut.disabled = d >= 4.199999;
 }
 
-function paintPanels() {
-  if (!current) { renderIndex(null); renderReadout(null); return; }
-  const focus = current.api.focus;
-  renderIndex(current.corpus, focus ? focus.name : null, hop, release);
-  renderReadout(focus ? current.api.describe(focus) : null, hop);
-}
-function hop(name) { if (current?.api.trace(name)) { paintPanels(); showZoom(); } }
-function release() { current?.api.release(); paintPanels(); showZoom(); }
+function release() { current?.api.release(); showZoom(); }
 
 function select(key) {
   if (busy || current?.key === key) return;
@@ -1721,7 +1958,6 @@ function select(key) {
     }, 260);
   }
 
-  openDomains.clear();
   const corpus = compose(ind);
   slot = current ? 1 - current.slot : 0;
   const host = hosts[slot];
@@ -1733,12 +1969,17 @@ function select(key) {
     interactive: true,
     params: NARROW.matches ? { labelDensityMul: 0.42, docLabels: false, labelSize: 0.92 } : {},
     onReady: () => { host.dataset.ready = 'true'; busy = false; stripEl.removeAttribute('aria-busy'); },
-    onFocus: () => { paintPanels(); showZoom(); },
+    onFocus: (node) => {
+      showZoom();
+      if (chatDrove) return;                     // the chat already spoke for this one
+      if (node) describeNode(node, 'traced on the graph');
+      else reply({ lines: ['Let go.'] });
+    },
   });
 
   current = { key: ind.key, slot, api, corpus };
   statusEl.textContent = `${ind.label}: ${corpus.clusters.length} domains, ${corpus.documents.length} specimens.`;
-  paintPanels();
+  greet();
   showZoom();
 }
 
