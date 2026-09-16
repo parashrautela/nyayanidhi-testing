@@ -494,7 +494,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
       <!-- Chat -->
       <div class="world__chat">
         <div class="chat">
-          <div class="chat__log" id="chat-log" role="log" aria-live="polite" aria-label="Conversation"></div>
+          <div class="chat__log" id="chat-log" role="log" aria-live="off" aria-label="Conversation"></div>
+          <p class="sr-only" aria-live="polite" id="chat-status"></p>
           <form class="chat__form" id="chat-form" autocomplete="off">
             <input class="chat__input" id="chat-input" type="text" placeholder="Ask about this world…" aria-label="Ask about this world" />
             <button class="chat__send" type="submit" aria-label="Send">
@@ -1107,6 +1108,8 @@ function mountWorld(host, corpus, opts = {}) {
   const worldPos = (n) => ({ x: n.x * par.spreadX, y: n.y * par.spreadY, z: n.z * par.spreadZ });
 
   function trace(n) {
+    // clicking bare canvas releases nothing; do not report it as a change
+    if (!n && !focused) return;
     focused = n || null;
     cam.node = focused;
     if (focused) {
@@ -1478,6 +1481,7 @@ function mountWorld(host, corpus, opts = {}) {
    ============================================================ */
 const statusEl = document.getElementById('model-status');
 const logEl    = document.getElementById('chat-log');
+const sayEl    = document.getElementById('chat-status');
 const formEl   = document.getElementById('chat-form');
 const inputEl  = document.getElementById('chat-input');
 
@@ -1522,6 +1526,11 @@ function reply(spec) {
     else { if (line.soft) p.className = 'msg__soft'; p.textContent = line.text; }
     el.append(p);
   }
+  const spoken = [spec.meta, spec.name, ...(spec.lines || []).map(l => (typeof l === 'string' ? l : l.text))]
+    .filter(Boolean).map(t => String(t).replace(/[.:]\s*$/, '')).join('. ') + '.';
+  sayEl.textContent = spec.chips && spec.chips.length
+    ? `${spoken} ${plural(spec.chips.length, 'option')} listed.`
+    : spoken;
   if (spec.chips && spec.chips.length) {
     const row = document.createElement('div');
     row.className = 'chat__chips';
@@ -1536,7 +1545,11 @@ function reply(spec) {
         t.textContent = c.tag;
         b.append(t);
       }
-      b.addEventListener('click', () => submit(c.value ?? c.label));
+      b.addEventListener('click', () => {
+        submit(c.value ?? c.label, c.label);
+        // give the keyboard back on pointer devices, but never summon it on touch
+        if (matchMedia('(pointer: fine)').matches) inputEl.focus();
+      });
       row.append(b);
     }
     el.append(row);
@@ -1545,16 +1558,19 @@ function reply(spec) {
 }
 
 /* ---- the names this world actually contains -------------- */
+let nameCache = { key: null, list: null };
 function worldNames() {
+  if (nameCache.key === current.key) return nameCache.list;
   const out = [];
   for (const c of current.corpus.clusters) {
     out.push({ name: c.hub, kind: 'hub' });
     for (const i of c.items) out.push({ name: i, kind: 'concept' });
   }
   for (const d of current.corpus.documents) out.push({ name: d.t, kind: 'doc' });
+  nameCache = { key: current.key, list: out };
   return out;
 }
-function findNames(q, limit = 10) {
+function findNames(q) {                    // every match, so counts can be honest
   const nq = norm(q);
   if (!nq) return [];
   const all = worldNames();
@@ -1572,7 +1588,7 @@ function findNames(q, limit = 10) {
     seen.add(n.name);
     out.push(n);
   }
-  return out.slice(0, limit);
+  return out;
 }
 function exactName(q) {
   const nq = norm(q);
@@ -1601,8 +1617,10 @@ function parsePath(text) {
   return null;
 }
 
+const shortName = (s) => s.split(' — ')[0];
 const touchChips = (touches, limit = 12) => touches.slice(0, limit).map(t => ({
-  label: t.name,
+  label: shortName(t.name),
+  value: t.name,
   tag: t.contested ? 'contested' : t.spine ? 'spine' : undefined,
 }));
 
@@ -1616,7 +1634,7 @@ function describeNode(node, meta) {
   const what = d.kind === 'hub'
     ? 'A domain of law.'
     : d.kind === 'doc'
-      ? `A specimen document${form ? `, ${form.toLowerCase()}` : ''}.`
+      ? `A specimen document${form ? `, ${form}` : ''}.`
       : `A concept${d.domain ? ` in ${d.domain}` : ''}.`;
 
   const lines = [what, d.touches.length
@@ -1633,7 +1651,10 @@ function describeNode(node, meta) {
 }
 function traceAndTell(name) {
   const node = current.api.node(name);
-  if (!node) return false;
+  if (!node) {
+    reply({ lines: [`I have the name ${shortName(name)}, but it is not drawn in this world.`] });
+    return false;
+  }
   quietly(() => current.api.trace(name));
   showZoom();
   describeNode(node);
@@ -1689,7 +1710,8 @@ function listContested() {
   reply({
     meta: 'Contested',
     lines: [`${plural(cs.length, 'pair')} pull against each other here.`],
-    chips: cs.map(([a, b]) => ({ label: `${a} ↔ ${b}`, value: a })),
+    // the chip names a pair, so answer with the pair, not just its first half
+    chips: cs.map(([a, b]) => ({ label: `${a} ↔ ${b}`, value: `path from ${a} to ${b}` })),
   });
 }
 function overview() {
@@ -1732,8 +1754,10 @@ function matchIndustry(q) {
     || (c.length >= 5 ? DATA.industries.find(i => norm(i.label).includes(c)) : null);
 }
 function goTo(ind) {
-  if (ind.key === current.key) return reply({ lines: [`Already in ${ind.label}.`] });
-  select(ind.key);
+  switch (select(ind.key)) {
+    case 'same':   return reply({ lines: [`Already in ${ind.label}.`] });
+    case 'queued': return reply({ lines: [`Finishing the last world first, then ${ind.label}.`] });
+  }
 }
 
 /* ---- route one message ----------------------------------- */
@@ -1748,7 +1772,11 @@ function answer(text) {
   if (/^((list |show )?(specimens?|documents?|docs|papers))$/.test(q)) return listSpecimens();
   if (/^(contested|conflicts?|disagreements?|tensions?|what (is )?contested|what fights)$/.test(q)) return listContested();
   if (/^(industries|list industries|tabs|worlds)$/.test(q)) return listIndustries();
-  if (/^(reset|clear|let go|release|deselect|stop)$/.test(q)) {
+  if (/^(clear|clear chat|clear the chat|start over|new chat)$/.test(q)) {
+    logEl.textContent = '';
+    return greet();
+  }
+  if (/^(reset|let go|release|deselect|stop)$/.test(q)) {
     quietly(() => current.api.release());
     showZoom();
     return reply({ lines: ['Let go. Nothing is traced.'] });
@@ -1794,11 +1822,13 @@ function answer(text) {
   if (!hits.length && stripped !== q) hits = findNames(q);
   if (hits.length === 1) return void traceAndTell(hits[0].name);
   if (hits.length > 1) {
+    const shown = hits.slice(0, 10);
     return reply({
       meta: plural(hits.length, 'match', 'matches'),
-      lines: ['Which one?'],
-      chips: hits.map(h => ({
-        label: h.name,
+      lines: [hits.length > shown.length ? 'Which one? The closest ten:' : 'Which one?'],
+      chips: shown.map(h => ({
+        label: shortName(h.name),
+        value: h.name,
         tag: h.kind === 'hub' ? 'domain' : h.kind === 'doc' ? 'specimen' : undefined,
       })),
     });
@@ -1817,10 +1847,10 @@ function answer(text) {
   });
 }
 
-function submit(text) {
+function submit(text, shown) {
   const t = (text || '').trim();
   if (!t) return;
-  said(t);
+  said((shown || t).trim());     // echo what was clicked, resolve what it meant
   answer(t);
 }
 function send() {
@@ -1837,7 +1867,6 @@ inputEl.addEventListener('keydown', (e) => {
 });
 
 function greet() {
-  logEl.textContent = '';
   const c = current.corpus;
   reply({
     meta: industryOf(current.key).label,
@@ -1936,8 +1965,10 @@ function showZoom() {
 
 function release() { current?.api.release(); showZoom(); }
 
+let queuedKey = null;
 function select(key) {
-  if (busy || current?.key === key) return;
+  if (current?.key === key) return 'same';
+  if (busy) { queuedKey = key; return 'queued'; }      // honoured once this world lands
   const ind = DATA.industries.find(i => i.key === key) || DATA.industries[0];
   busy = true;
   stripEl.setAttribute('aria-busy', 'true');
@@ -1968,7 +1999,14 @@ function select(key) {
     label: `${subject} drawn as a connected graph: the domains of Indian commercial law it runs on, with the concepts and specimen documents that hang off them, turning slowly in depth.`,
     interactive: true,
     params: NARROW.matches ? { labelDensityMul: 0.42, docLabels: false, labelSize: 0.92 } : {},
-    onReady: () => { host.dataset.ready = 'true'; busy = false; stripEl.removeAttribute('aria-busy'); },
+    onReady: () => {
+      host.dataset.ready = 'true';
+      busy = false;
+      stripEl.removeAttribute('aria-busy');
+      const next = queuedKey;
+      queuedKey = null;
+      if (next && next !== current.key) select(next);
+    },
     onFocus: (node) => {
       showZoom();
       if (chatDrove) return;                     // the chat already spoke for this one
@@ -1981,6 +2019,7 @@ function select(key) {
   statusEl.textContent = `${ind.label}: ${corpus.clusters.length} domains, ${corpus.documents.length} specimens.`;
   greet();
   showZoom();
+  return 'ok';
 }
 
 resetBtn.addEventListener('click', release);
