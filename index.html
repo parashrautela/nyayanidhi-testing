@@ -163,7 +163,7 @@ body { overflow: hidden; }
   cursor: pointer;
   align-items: center;
   display: inline-flex;
-  transition: background-color var(--ds-dur-fast) var(--ds-ease);
+  transition: background-color var(--ds-dur-fast) var(--ds-ease), transform .1s ease-out;
 }
 .picker__button:hover,
 .picker__button[aria-expanded="true"] { background: var(--ds-bg); }
@@ -204,13 +204,11 @@ body { overflow: hidden; }
   border-radius: 20px;
   background: var(--ds-surface-alt);
   box-shadow: 0 16px 48px rgb(26 24 23 / .14), 0 2px 8px rgb(26 24 23 / .06);
-  transform: translateX(-50%);
-  animation: picker-in .18s var(--ds-ease-out);
+  /* centred with `translate`, which leaves `transform` to the spring */
+  translate: -50% 0;
+  will-change: transform, opacity, filter;
 }
 .picker__list[hidden] { display: none; }
-@keyframes picker-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(-4px) scale(.98); }
-}
 .picker__option {
   padding: 9px 14px;
   border-radius: 12px;
@@ -239,7 +237,6 @@ body { overflow: hidden; }
   border-radius: 50%;
   background: currentColor;
 }
-@media (prefers-reduced-motion: reduce) { .picker__list { animation: none; } }
 
 /* ============================================================
    5. WORLD — a full-page graph with the chat floating over it
@@ -328,9 +325,13 @@ body { overflow: hidden; }
   justify-content: center;
   align-items: center;
   display: inline-flex;
-  transition: background-color var(--ds-dur-fast) var(--ds-ease), color var(--ds-dur-fast) var(--ds-ease), border-color var(--ds-dur-fast) var(--ds-ease);
+  transition: background-color var(--ds-dur-fast) var(--ds-ease), color var(--ds-dur-fast) var(--ds-ease), border-color var(--ds-dur-fast) var(--ds-ease), transform .1s ease-out;
 }
 .icon-btn:hover { background: var(--ds-bg); }
+/* controls answer on the press itself, not on release */
+.icon-btn:active,
+.picker__button:active,
+.world__zoom-btn:active:not(:disabled) { transform: scale(.94); }
 .icon-btn[aria-expanded="true"] {
   background: var(--ds-inverse);
   border-color: var(--ds-inverse);
@@ -377,11 +378,9 @@ body { overflow: hidden; }
   left: 0;
   right: 0;
   z-index: 4;
-  /* equal outer columns keep the picker centred whatever sits either side */
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  justify-content: space-between;
   align-items: center;
-  column-gap: var(--ds-space-2);
-  display: grid;
+  display: flex;
   pointer-events: none;
 }
 .world__reset { justify-self: start; pointer-events: auto; }
@@ -402,7 +401,7 @@ body { overflow: hidden; }
   width: 32px; height: 32px;
   color: var(--ds-chrome);
   cursor: pointer;
-  transition: opacity var(--ds-dur-fast) var(--ds-ease), background-color var(--ds-dur-fast) var(--ds-ease);
+  transition: opacity var(--ds-dur-fast) var(--ds-ease), background-color var(--ds-dur-fast) var(--ds-ease), transform .1s ease-out;
   border: 0;
   border-radius: 50%;
   justify-content: center;
@@ -436,13 +435,10 @@ body { overflow: hidden; }
   bottom: calc(100% + 10px);
   border-radius: 16px;
   background: color-mix(in srgb, var(--ds-surface-alt) 90%, transparent);
-  transform-origin: 100% 100%;
-  animation: hints-in .18s var(--ds-ease-out);
+  will-change: transform, opacity, filter;
 }
 .world__legend[hidden] { display: none; }
 .world__hint { white-space: nowrap; }
-@keyframes hints-in { from { opacity: 0; transform: translateY(4px) scale(.97); } }
-@media (prefers-reduced-motion: reduce) { .world__legend { animation: none; } }
 /* Glass. Where the browser can blur what is behind it, the chat and the
    hints are frosted rather than painted, and the graph drifts behind them
    as soft light. Without backdrop-filter they stay solid and legible. */
@@ -788,12 +784,10 @@ body { overflow: hidden; }
   .world__chat { height: min(38dvh, 360px); }
   /* the hints name mouse and keyboard moves a phone does not have */
   .hints { display: none; }
-  /* one row still: zoom drops its readout and the picker takes the rest */
-  .world__bar { grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 8px; }
-  .world__zoom-pct { display: none; }
-  .picker { justify-self: stretch; }
-  .picker__button { width: 100%; padding: 0 8px 0 14px; gap: 6px; }
+  /* the intro already says what this picks; the room goes to the name,
+     so even the longest industry reads whole */
   .picker__label { display: none; }
+
 }
 </style>
 </head>
@@ -811,6 +805,14 @@ body { overflow: hidden; }
       <div class="model__head">
         <h1 class="model__title" id="model-title">Model your business</h1>
         <p class="model__lede">Every contract, licence, notice, approval and event a business carries is already a node with relations to the others. Pick an industry to see that world drawn as a typed state graph: the domains of law it runs on, the instruments it turns on, and the questions where they contest each other.</p>
+        <div class="picker" id="picker">
+          <button type="button" class="picker__button" id="picker-button" aria-haspopup="listbox" aria-expanded="false" aria-controls="picker-list">
+            <span class="picker__label" id="picker-label">Industry</span>
+            <span class="picker__value" id="picker-value">Enterprise compliance</span>
+            <svg class="picker__chevron" width="20" height="20" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+          </button>
+          <ul class="picker__list" id="picker-list" role="listbox" aria-labelledby="picker-label" hidden></ul>
+        </div>
       </div>
       <p class="sr-only" aria-live="polite" id="model-status"></p>
     </header>
@@ -851,15 +853,6 @@ body { overflow: hidden; }
           <button type="button" class="icon-btn world__reset" id="reset" aria-label="Reset view" data-tip="Reset view" data-tip-align="start">
             <svg class="world__reset-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"></path><path d="M4.5 4.5v3.2h3.2"></path></svg>
           </button>
-
-          <div class="picker" id="picker">
-            <button type="button" class="picker__button" id="picker-button" aria-haspopup="listbox" aria-expanded="false" aria-controls="picker-list">
-              <span class="picker__label" id="picker-label">Industry</span>
-              <span class="picker__value" id="picker-value">Enterprise compliance</span>
-              <svg class="picker__chevron" width="20" height="20" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
-            </button>
-            <ul class="picker__list" id="picker-list" role="listbox" aria-labelledby="picker-label" hidden></ul>
-          </div>
 
           <div class="world__zoom" role="group" aria-label="Zoom">
             <button type="button" class="world__zoom-btn" id="zoom-in" aria-label="Zoom in">
@@ -2311,6 +2304,77 @@ function greet() {
 /* ============================================================
    6. STAGE CONTROLS — the industry picker and the hints
    ============================================================ */
+
+/* Popovers that grow out of the control that opened them.
+   A spring, not a keyframe: it keeps its position and speed, so pressing
+   again mid-flight turns the panel round from wherever it is instead of
+   snapping. It scales out of the control's centre, resolves out of a blur
+   as it arrives, and goes back the way it came. Critically damped both
+   ways: a menu that was tapped open has no momentum to overshoot with.
+   With reduced motion it is a plain cross-fade. */
+const SPRING_OPEN  = { response: 0.34, damping: 1 };
+const SPRING_CLOSE = { response: 0.2,  damping: 1 };
+
+function makePop(panel, trigger) {
+  let x = 0, v = 0, target = 0, spring = SPRING_OPEN, raf = 0, last = 0;
+
+  function paint() {
+    const p = Math.min(1, Math.max(0, x));
+    if (REDUCED.matches) {
+      panel.style.opacity = p.toFixed(3);
+      panel.style.transform = '';
+      panel.style.filter = '';
+      return;
+    }
+    // it is opaque well before it is full size, and fades only at the very end of going
+    panel.style.opacity = Math.min(1, p * 1.8).toFixed(3);
+    panel.style.transform = `scale(${(0.35 + 0.65 * p).toFixed(4)})`;
+    const blur = (1 - p) * 10;
+    panel.style.filter = blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : '';
+  }
+
+  function step(now) {
+    const dt = Math.min(0.064, (now - last) / 1000);
+    last = now;
+    const k = (2 * Math.PI / spring.response) ** 2;          // Apple's response / damping,
+    const c = (4 * Math.PI * spring.damping) / spring.response; // as stiffness and friction
+    const n = 4, h = dt / n;                                  // sub-steps keep it stable
+    for (let i = 0; i < n; i++) {
+      v += (-k * (x - target) - c * v) * h;
+      x += v * h;
+    }
+    const settled = Math.abs(x - target) < 0.0015 && Math.abs(v) < 0.01;
+    if (settled) { x = target; v = 0; }
+    paint();
+    if (!settled) { raf = requestAnimationFrame(step); return; }
+    raf = 0;
+    if (target === 0) panel.hidden = true;
+  }
+
+  function go(to) {
+    target = to;
+    spring = to ? SPRING_OPEN : SPRING_CLOSE;
+    // a panel on its way out can't be pressed
+    panel.style.pointerEvents = to ? '' : 'none';
+    if (to && panel.hidden) {
+      panel.hidden = false;
+      // measure at rest size, then pin the origin to the control's centre
+      panel.style.transform = 'none';
+      const pr = panel.getBoundingClientRect();
+      const tr = trigger.getBoundingClientRect();
+      panel.style.transformOrigin =
+        `${(tr.left + tr.width / 2 - pr.left).toFixed(1)}px ${(tr.top + tr.height / 2 - pr.top).toFixed(1)}px`;
+      paint();
+    }
+    if (!raf) { last = performance.now(); raf = requestAnimationFrame(step); }
+  }
+
+  return {
+    open:  () => go(1),
+    close: () => go(0),
+    get isOpen() { return target === 1; },
+  };
+}
 const pickerEl   = document.getElementById('picker');
 const pickerBtn  = document.getElementById('picker-button');
 const pickerVal  = document.getElementById('picker-value');
@@ -2334,15 +2398,16 @@ function focusOption(o) {
   o.focus({ preventScroll: true });
   o.scrollIntoView({ block: 'nearest' });
 }
+const pickerPop = makePop(pickerList, pickerBtn);
 function openPicker() {
-  if (!pickerList.hidden) return;
-  pickerList.hidden = false;
+  if (pickerPop.isOpen) return;
+  pickerPop.open();
   pickerBtn.setAttribute('aria-expanded', 'true');
   focusOption(options.find(o => o.dataset.key === current?.key) || options[0]);
 }
 function closePicker({ refocus = true } = {}) {
-  if (pickerList.hidden) return;
-  pickerList.hidden = true;
+  if (!pickerPop.isOpen) return;
+  pickerPop.close();
   pickerBtn.setAttribute('aria-expanded', 'false');
   if (refocus) pickerBtn.focus({ preventScroll: true });
 }
@@ -2355,7 +2420,7 @@ function showIndustry(ind) {
   for (const o of options) o.setAttribute('aria-selected', String(o.dataset.key === ind.key));
 }
 
-pickerBtn.addEventListener('click', () => (pickerList.hidden ? openPicker() : closePicker()));
+pickerBtn.addEventListener('click', () => (pickerPop.isOpen ? closePicker() : openPicker()));
 pickerBtn.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openPicker(); }
 });
@@ -2398,14 +2463,15 @@ const hintsEl   = document.getElementById('hints');
 const hintsBtn  = document.getElementById('hints-toggle');
 const hintsList = document.getElementById('model-legend');
 
+const hintsPop = makePop(hintsList, hintsBtn);
 function setHints(open, { refocus = false } = {}) {
-  hintsList.hidden = !open;
+  if (open) hintsPop.open(); else hintsPop.close();
   hintsBtn.setAttribute('aria-expanded', String(open));
   if (!open && refocus) hintsBtn.focus({ preventScroll: true });
 }
-hintsBtn.addEventListener('click', () => setHints(hintsList.hidden));
+hintsBtn.addEventListener('click', () => setHints(!hintsPop.isOpen));
 hintsEl.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape' || hintsList.hidden) return;
+  if (e.key !== 'Escape' || !hintsPop.isOpen) return;
   // close the hints, and keep the key from also letting go of a traced node
   e.preventDefault();
   e.stopPropagation();
@@ -2418,8 +2484,8 @@ hintsEl.addEventListener('keydown', (e) => {
 // never sees it.
 document.addEventListener('pointerdown', (e) => {
   let closed = false;
-  if (!pickerList.hidden && !pickerEl.contains(e.target)) { closePicker({ refocus: false }); closed = true; }
-  if (!hintsList.hidden && !hintsEl.contains(e.target)) { setHints(false); closed = true; }
+  if (pickerPop.isOpen && !pickerEl.contains(e.target)) { closePicker({ refocus: false }); closed = true; }
+  if (hintsPop.isOpen && !hintsEl.contains(e.target)) { setHints(false); closed = true; }
   if (closed && e.target instanceof HTMLCanvasElement) e.stopPropagation();
 }, true);
 
