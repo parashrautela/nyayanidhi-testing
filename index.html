@@ -131,7 +131,10 @@ body { overflow: hidden; }
   margin: 0;
 }
 .model__lede {
-  width: 741px;
+  /* Wide enough that the intro sets in three lines: it needs 48.1em, and
+     the rest is slack for fonts that render a hair wider. In em, so it
+     breaks the same way where the body text drops to 15px. */
+  width: 50em;
   max-width: 100%;
   font-weight: 400;
   font-size: var(--ds-text-body);
@@ -139,6 +142,13 @@ body { overflow: hidden; }
   letter-spacing: var(--ds-track-body);
   color: var(--ds-ink-soft);
   margin: 0;
+  /* And never more than three. Where the screen is too narrow for that,
+     the end is trimmed; the full text stays in the page for screen readers. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 /* ============================================================
@@ -770,15 +780,6 @@ body { overflow: hidden; }
 }
 @media (max-width: 767px) {
   .model__head { gap: 10px; }
-  /* six lines of intro left the graph a sliver on a phone; three is the
-     line. The full text stays in the page for screen readers. */
-  .model__lede {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    overflow: hidden;
-  }
   .model__title { font-size: 36px; }
   .model__lede { font-size: 14px; }
   .world__chat { height: min(38dvh, 360px); }
