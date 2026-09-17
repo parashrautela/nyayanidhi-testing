@@ -131,9 +131,9 @@ body { overflow: hidden; }
   margin: 0;
 }
 .model__lede {
-  /* Wide enough that the intro sets in three lines: it needs 48.1em, and
-     the rest is slack for fonts that render a hair wider. In em, so it
-     breaks the same way where the body text drops to 15px. */
+  /* Wide enough that the full intro sets in three lines: it needs 48.1em,
+     and the rest is slack for fonts that render a hair wider. In em, so it
+     breaks the same way where the body text drops below 16px. */
   width: 50em;
   max-width: 100%;
   font-weight: 400;
@@ -142,13 +142,18 @@ body { overflow: hidden; }
   letter-spacing: var(--ds-track-body);
   color: var(--ds-ink-soft);
   margin: 0;
-  /* And never more than three. Where the screen is too narrow for that,
-     the end is trimmed; the full text stays in the page for screen readers. */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  overflow: hidden;
+}
+/* The intro in three lengths, one per screen size. Each is complete and
+   each is short enough to set in three lines on the narrowest screen it
+   is shown on, so none is ever trimmed. */
+.lede-mid, .lede-short { display: none; }
+@media (max-width: 860px) {
+  .lede-full { display: none; }
+  .lede-mid { display: inline; }
+}
+@media (max-width: 560px) {
+  .lede-mid { display: none; }
+  .lede-short { display: inline; }
 }
 
 /* ============================================================
@@ -620,8 +625,17 @@ body { overflow: hidden; }
   font-size: var(--ds-text-body);
   letter-spacing: var(--ds-track-body);
   padding: 0 16px;
+  transition: box-shadow var(--ds-dur-fast) var(--ds-ease), background-color var(--ds-dur-fast) var(--ds-ease);
 }
 .chat__input::placeholder { color: var(--ds-ink-faint); }
+/* A text field shows focus on every click, not only from the keyboard, so
+   the page's heavy double outline read as a stuck "selected" state here.
+   It gets a soft halo instead; the field also lightens while in use. */
+.chat__input:focus,
+.chat__input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgb(26 24 23 / .08);
+}
 .chat__send {
   background: var(--ds-inverse);
   width: 32px;
@@ -805,7 +819,7 @@ body { overflow: hidden; }
     <header class="model__top">
       <div class="model__head">
         <h1 class="model__title" id="model-title">Model your business</h1>
-        <p class="model__lede">Every contract, licence, notice, approval and event a business carries is already a node with relations to the others. Pick an industry to see that world drawn as a typed state graph: the domains of law it runs on, the instruments it turns on, and the questions where they contest each other.</p>
+        <p class="model__lede"><span class="lede-full">Every contract, licence, notice, approval and event a business carries is already a node with relations to the others. Pick an industry to see that world drawn as a typed state graph: the domains of law it runs on, the instruments it turns on, and the questions where they contest each other.</span><span class="lede-mid">Every contract, notice and approval a business carries is a node tied to the rest. Pick an industry to see its graph: the law it runs on, the instruments it turns on, and where they clash.</span><span class="lede-short">Every contract and notice is a node in a web of law. Pick an industry to see how they connect and clash.</span></p>
         <div class="picker" id="picker">
           <button type="button" class="picker__button" id="picker-button" aria-haspopup="listbox" aria-expanded="false" aria-controls="picker-list">
             <span class="picker__label" id="picker-label">Industry</span>
