@@ -54,6 +54,7 @@
   --ds-text-body: clamp(15px, calc(.125vw + 14.4px), 16px);
   --ds-text-body-sm: 15px;
   --ds-text-micro: 12px;
+  --ds-text-nav: clamp(14px, calc(.125vw + 13.4px), 15px);
   --ds-leading-body: 1.5;
   --ds-leading-tight: .95;
   --ds-track-body: .01em;
@@ -109,21 +110,81 @@ body { overflow: hidden; }
      something to press, so the graph can be dragged everywhere else */
   pointer-events: none;
 }
-.model__top { position: relative; min-width: 0; padding-bottom: 20px; }
-/* a wash behind the headline so it reads over drifting nodes */
-.model__head {
-  padding: clamp(24px, 4.5vh, 56px) var(--ds-gutter) 0;
-  text-align: center;
-  flex-direction: column;
+.model__top { position: relative; min-width: 0; padding: 16px var(--ds-gutter) 0; }
+
+/* the site nav: one pill across the top */
+.site-nav {
+  pointer-events: auto;
+  height: 56px;
+  padding: 0 6px 0 24px;
+  border: 1px solid rgb(0 0 0 / .05);
+  border-radius: var(--ds-radius-lg);
+  background: rgb(255 255 255 / .72);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 16px;
+  display: grid;
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .site-nav {
+    background: rgb(255 255 255 / .5);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    backdrop-filter: blur(16px) saturate(1.3);
+  }
+}
+.site-nav__links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: clamp(20px, 2.4vw, 44px);
   display: flex;
 }
+.site-nav__links a,
+.site-nav__brand,
+.site-nav__cta {
+  font-family: var(--ds-font-body);
+  font-weight: 400;
+  font-size: var(--ds-text-nav);
+  letter-spacing: var(--ds-track-body);
+  color: var(--ds-chrome);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-nav__links a { transition: opacity var(--ds-dur-fast) var(--ds-ease); }
+.site-nav__links a:hover { opacity: .6; }
+.site-nav__brand {
+  justify-self: center;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  display: inline-flex;
+}
+.site-nav__mark { width: 22px; height: 23px; flex: none; display: block; }
+.site-nav__cta {
+  justify-self: end;
+  height: 44px;
+  padding: 0 clamp(20px, 2.8vw, 40px);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-inverse);
+  color: var(--ds-ink-inverse);
+  align-items: center;
+  display: inline-flex;
+  transition: background-color var(--ds-dur-fast) var(--ds-ease);
+}
+.site-nav__cta:hover { background: #3a3634; }
+
+/* the hero: headline left, intro right */
+.model__head {
+  padding: clamp(28px, 6vh, 72px) 0 0;
+  grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+  column-gap: clamp(24px, 5vw, 96px);
+  row-gap: 12px;
+  align-items: center;
+  display: grid;
+}
 .model__title {
-  max-width: var(--ds-rail);
   font-family: var(--ds-font-display);
   font-weight: 300;
-  font-size: clamp(40px, calc(3vw + 24px), 72px);
+  font-size: clamp(44px, 5.2vw, 100px);
   line-height: var(--ds-leading-tight);
   letter-spacing: var(--ds-track-display);
   color: var(--ds-ink);
@@ -131,8 +192,7 @@ body { overflow: hidden; }
   margin: 0;
 }
 .model__lede {
-  width: 741px;
-  max-width: 100%;
+  max-width: 620px;
   font-weight: 400;
   font-size: var(--ds-text-body);
   line-height: var(--ds-leading-body);
@@ -145,7 +205,7 @@ body { overflow: hidden; }
 /* ============================================================
    4. TABS
    ============================================================ */
-.tabs { margin: 20px 0 0; display: flow-root; position: relative; pointer-events: auto; }
+.tabs { display: flow-root; position: relative; pointer-events: auto; }
 /* Registered so the edge fades can transition rather than snap. */
 @property --fade-start { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --fade-end   { syntax: '<length>'; inherits: false; initial-value: 0px; }
@@ -154,8 +214,7 @@ body { overflow: hidden; }
   overscroll-behavior-x: contain;
   scrollbar-width: none;
   margin: -4px 0;
-  padding: 4px var(--ds-gutter);
-  scroll-padding-inline: var(--ds-gutter);
+  padding: 4px 0;
   display: flex;
   position: relative;
   overflow-x: auto;
@@ -213,10 +272,10 @@ body { overflow: hidden; }
   padding: 0;
   display: flex;
   position: absolute;
-  top: 4px; right: var(--ds-gutter);
+  top: 4px; right: 0;
 }
 .tabs__arrow svg { width: 32px; height: 32px; display: block; }
-.tabs__arrow--start { left: var(--ds-gutter); right: auto; transform: rotate(180deg); }
+.tabs__arrow--start { left: 0; right: auto; transform: rotate(180deg); }
 .tabs__fade, .tabs__arrow {
   transition: opacity var(--ds-dur-fast) var(--ds-ease), visibility var(--ds-dur-fast) var(--ds-ease);
 }
@@ -230,35 +289,55 @@ body { overflow: hidden; }
    ============================================================ */
 .world {
   position: relative;
-  grid-template-columns: 360px minmax(0, 1fr);
-  gap: var(--ds-space-2);
   min-width: 0;
   min-height: 0;
-  padding: 0 var(--ds-gutter) var(--ds-gutter);
+  padding: clamp(16px, 3vh, 32px) calc(var(--ds-gutter) + 16px) var(--ds-gutter);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--ds-space-2);
   display: grid;
-  transition: grid-template-columns var(--ds-dur-fold) var(--ds-ease-out), column-gap var(--ds-dur-fold) var(--ds-ease-out);
 }
-/* folded: the chat's column closes and the graph takes the whole width */
-.world[data-chat="closed"] { grid-template-columns: 0px minmax(0, 1fr); column-gap: 0px; }
-.world__chat {
-  pointer-events: auto;
-  align-self: end;
-  height: min(100%, 640px);
+/* one row of controls: reset, the industries, zoom */
+.world__bar {
   min-width: 0;
-  min-height: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--ds-space-2);
+  display: grid;
+}
+/* The graph's stage runs the full width. The chat and the hints float in
+   its bottom corners, over the graph, which carries on behind them. */
+.world__frame { position: relative; min-width: 0; min-height: 0; }
+/* what the graph is centred on and sized to */
+.world__fit {
+  position: absolute;
+  inset: 0;
+  transition: bottom var(--ds-dur-fold) var(--ds-ease-out);
+}
+.world__chat {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 360px;
+  max-width: 100%;
+  height: clamp(300px, 64%, 560px);
+  max-height: 100%;
+  pointer-events: auto;
   border: 1px solid var(--ds-rule-strong);
   border-radius: 24px;
   background: var(--ds-surface-alt);
   overflow: hidden;
-  transition: opacity .25s var(--ds-ease), visibility 0s linear 0s;
+  transform-origin: 0 100%;
+  transition: opacity .25s var(--ds-ease), transform .35s var(--ds-ease-out), visibility 0s linear 0s;
 }
+/* folded: the pane sinks into its corner and the pill takes its place */
 .world[data-chat="closed"] .world__chat {
   opacity: 0;
+  transform: translateY(12px) scale(.96);
   visibility: hidden;
-  transition: opacity .18s var(--ds-ease), visibility 0s linear var(--ds-dur-fold);
+  transition: opacity .18s var(--ds-ease), transform .3s var(--ds-ease-out), visibility 0s linear .3s;
 }
-/* the uncovered part of the page; the graph is centred and sized to it */
-.world__frame { position: relative; min-width: 0; min-height: 0; }
 
 /* the canvas fills the page, underneath everything */
 .world__stage { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
@@ -272,9 +351,9 @@ body { overflow: hidden; }
   /* The graph still runs the full page, but it is held back to a ghost
      behind the headline and comes up to full strength as it reaches the
      open area, so labels never sit on top of the intro. --top-h is the
-     headline block's height, kept current from script. */
-  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0 / .16) 0, rgb(0 0 0 / .16) calc(var(--top-h, 280px) - 96px), #000 calc(var(--top-h, 280px) + 8px));
-  mask-image: linear-gradient(to bottom, rgb(0 0 0 / .16) 0, rgb(0 0 0 / .16) calc(var(--top-h, 280px) - 96px), #000 calc(var(--top-h, 280px) + 8px));
+     top of the graph's stage, kept current from script. */
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0 / .16) 0, rgb(0 0 0 / .16) calc(var(--top-h, 360px) - 120px), #000 var(--top-h, 360px));
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / .16) 0, rgb(0 0 0 / .16) calc(var(--top-h, 360px) - 120px), #000 var(--top-h, 360px));
 }
 .world__host[data-ready="true"] { opacity: 1; pointer-events: auto; }
 .world__host[data-ready="leaving"] {
@@ -316,7 +395,7 @@ body { overflow: hidden; }
   display: inline-flex;
 }
 .world__btn:hover { background: var(--ds-bg); }
-.world__reset { z-index: 2; position: absolute; top: 0; left: 0; pointer-events: auto; }
+.world__reset { pointer-events: auto; }
 .world__zoom {
   z-index: 2;
   border: 1px solid var(--ds-chrome);
@@ -326,8 +405,6 @@ body { overflow: hidden; }
   gap: 12px;
   padding: 2px;
   display: inline-flex;
-  position: absolute;
-  top: 0; right: 0;
   pointer-events: auto;
 }
 .world__zoom-btn {
@@ -585,8 +662,8 @@ body { overflow: hidden; }
 /* Shown only while the chat is folded, in the corner it folded into. */
 .chat__launcher {
   position: absolute;
-  left: var(--ds-gutter);
-  bottom: var(--ds-gutter);
+  left: 0;
+  bottom: 0;
   z-index: 3;
   pointer-events: auto;
   height: 44px;
@@ -645,51 +722,58 @@ body { overflow: hidden; }
    ============================================================ */
 /* short laptop screens: give the height back to the graph */
 @media (max-height: 760px) and (min-width: 768px) {
-  .model__head { gap: 10px; padding-top: 20px; }
-  .model__title { font-size: clamp(36px, calc(2.4vw + 18px), 52px); }
+  .model__head { padding-top: 20px; }
+  .model__title { font-size: clamp(40px, 4.4vw, 72px); }
 }
 @media (max-width: 1000px) {
-  .world {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
+  .model__head { grid-template-columns: minmax(0, 1fr); }
+  /* the chat becomes a sheet along the bottom of the stage... */
+  .world__chat { width: auto; right: 0; height: min(40dvh, 400px); max-height: 60%; }
+  .world[data-chat="closed"] .world__chat { transform: translateY(24px); }
+  /* ...and the graph is fitted to what the sheet leaves open */
+  .world__fit { bottom: calc(min(40dvh, 400px, 60%) + 12px); }
+  .world[data-chat="closed"] .world__fit { bottom: 56px; }
+  /* the sheet spans the width, so the hints ride above it rather than under it */
+  .world__legend {
+    bottom: calc(min(40dvh, 400px, 60%) + 12px);
+    transition: bottom var(--ds-dur-fold) var(--ds-ease-out);
   }
-  .world__frame { order: 1; }
-  .world__chat {
-    order: 2;
-    align-self: stretch;
-    height: min(40dvh, 400px);
-    transition: height var(--ds-dur-fold) var(--ds-ease-out), opacity .25s var(--ds-ease), visibility 0s linear 0s;
-  }
-  /* folded on narrow screens: the sheet drops away and the graph takes the height */
-  .world[data-chat="closed"] { grid-template-columns: minmax(0, 1fr); row-gap: 0px; }
-  .world[data-chat="closed"] .world__chat {
-    height: 0;
-    border-width: 0;
-    transition: height var(--ds-dur-fold) var(--ds-ease-out), border-width 0s linear var(--ds-dur-fold), opacity .18s var(--ds-ease), visibility 0s linear var(--ds-dur-fold);
-  }
+  .world[data-chat="closed"] .world__legend { bottom: 0; }
   .chat__fold svg { transform: rotate(90deg); }   /* points down: the sheet folds downward */
 }
-@media (min-width: 1001px) {
-  /* hold the pane's contents at full width while its column closes,
-     so they are clipped away rather than squeezed into a reflow */
-  .chat { min-width: 344px; }
-}
 @media (max-width: 767px) {
-  .tabs[data-back="true"] .tabs__strip { --fade-start: 72px; }
-  .tabs[data-more="true"] .tabs__strip { --fade-end: 72px; }
-  .model__head { gap: 10px; }
+  .model__top { padding-top: 10px; }
+  .site-nav { height: 48px; padding-left: 16px; grid-template-columns: minmax(0, 1fr) auto; }
+  /* the links lead nowhere yet; a menu can come with the pages */
+  .site-nav__links { display: none; }
+  .site-nav__brand { justify-self: start; }
+  .site-nav__cta { height: 38px; padding: 0 18px; }
+  .model__head { padding-top: 18px; row-gap: 8px; }
+  .model__title { font-size: 40px; }
   /* six lines of intro left the graph a sliver on a phone; three is the
      line. The full text stays in the page for screen readers. */
   .model__lede {
+    font-size: 14px;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     line-clamp: 3;
     overflow: hidden;
   }
-  .model__title { font-size: 36px; }
-  .model__lede { font-size: 14px; }
+  .world { padding-inline: var(--ds-gutter); }
+  /* the industries get their own line above reset and zoom */
+  .world__bar {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "tabs tabs" "reset zoom";
+    row-gap: 10px;
+  }
+  .model__tabs { grid-area: tabs; }
+  .world__reset { grid-area: reset; justify-self: start; }
+  .world__zoom { grid-area: zoom; justify-self: end; }
+  .tabs[data-back="true"] .tabs__strip { --fade-start: 72px; }
+  .tabs[data-more="true"] .tabs__strip { --fade-end: 72px; }
   .world__chat { height: min(38dvh, 360px); }
+  .world__fit { bottom: calc(min(38dvh, 360px, 60%) + 12px); }
   /* the hints name mouse and keyboard moves a phone does not have */
   .world__legend { display: none; }
 }
@@ -706,60 +790,44 @@ body { overflow: hidden; }
 
   <div class="model__overlay">
     <header class="model__top">
+      <nav class="site-nav" aria-label="Site">
+        <ul class="site-nav__links">
+          <li><a href="#">Platforms</a></li>
+          <li><a href="#">Approach</a></li>
+          <li><a href="#">Company</a></li>
+        </ul>
+        <a class="site-nav__brand" href="#" aria-label="Nyayanidhi, home">
+          <svg class="site-nav__mark" width="23" height="24" viewBox="0 0 23.125 24" fill="none" aria-hidden="true" focusable="false"><g><path d="M9.66193 5.90681L11.5368 5.15685L13.4117 5.90681V23.9996H12.4743H11.5368H10.5994H9.66193V5.90681Z" fill="#1A1817"/><path d="M11.5368 3.57628e-05H9.66193V2.81239L11.5368 4.40606L13.4117 2.81239V3.57628e-05H11.5368Z" fill="#1A1817"/><path d="M7.22743 7.1259L8.53986 6.37593V11.2507L7.22743 10.5007V7.1259Z" fill="#1A1817"/><path d="M4.83692 7.39887L7.22746 8.9074V10.5011L4.83692 8.99254V7.39887Z" fill="#1A1817"/><g><path d="M0 14.3904L4.31228 11.7187L8.53082 14.3617V12.7681L4.31228 10.125L0 12.7968V14.3904Z" fill="#1A1817"/></g><path d="M14.5456 14.3907L18.8579 11.719V10.1253L14.5456 12.7971V14.3907Z" fill="#1A1817"/><path d="M13.9736 14.3907L9.66135 11.719V10.1253L13.9736 12.7971V14.3907Z" fill="#F5F5EF"/><path d="M23.125 14.3614L18.8596 11.7184V10.1247L23.125 12.7677V14.3614Z" fill="#1A1817"/><path d="M18.1973 7.41719L15.8537 8.90572V10.4994L18.1973 9.01086V7.41719Z" fill="#1A1817"/><path d="M15.8508 7.1259L14.5384 6.37593V11.2507L15.8508 10.5007V7.1259Z" fill="#1A1817"/><path d="M8.54274 15.1405V16.6486L4.27733 18.1566L0.0119207 16.6486V15.1405L4.27733 15.1405H8.54274Z" fill="#1A1817"/><path d="M23.0764 15.1882V16.6962L18.811 18.2043L14.5456 16.6962V15.1882L18.811 15.1882H23.0764Z" fill="#1A1817"/><path opacity="0.1" d="M4.88092 19.3127L8.53699 18.0003V24H4.88092V19.3127Z" fill="#1A1817"/><path opacity="0.1" d="M19.3266 19.3127L22.9827 18.0003V24H19.3266V19.3127Z" fill="#1A1817"/><path opacity="0.1" d="M19.3266 9.05274L23.0764 11.1093V0.000467706H19.3266V9.05274Z" fill="#1A1817"/><path opacity="0.1" d="M3.76633 9.05274L0.0165215 11.1093V0.000467706H3.76633V9.05274Z" fill="#1A1817"/><path opacity="0.1" d="M8.54734 4.77819L4.89127 6.8434V6.70552e-08H8.54734V4.77819Z" fill="#1A1817"/><path opacity="0.1" d="M14.5456 4.77819L18.2017 6.8434V6.70552e-08H14.5456V4.77819Z" fill="#1A1817"/><path opacity="0.1" d="M3.76633 19.3127L0.110267 18.0003V24H3.76633V19.3127Z" fill="#1A1817"/><path opacity="0.1" d="M18.1973 19.3127L14.5413 18.0003V24H18.1973V19.3127Z" fill="#1A1817"/></g></svg>
+          <span>Nyayanidhi</span>
+        </a>
+        <a class="site-nav__cta" href="#">Book a demo</a>
+      </nav>
+
       <div class="model__head">
         <h1 class="model__title" id="model-title">Model your business</h1>
         <p class="model__lede">Every contract, licence, notice, approval and event a business carries is already a node with relations to the others. Pick an industry to see that world drawn as a typed state graph: the domains of law it runs on, the instruments it turns on, and the questions where they contest each other.</p>
       </div>
-      <div class="model__tabs">
-        <!-- Industry tabs -->
-        <div class="tabs" id="tabs" data-back="false" data-more="true">
-          <div class="tabs__strip" id="tabs-strip" role="tablist" aria-label="Industries"></div>
-          <div class="tabs__fade tabs__fade--start"></div>
-          <button type="button" class="tabs__arrow tabs__arrow--start" id="tabs-back" aria-label="Scroll industries left">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
-          </button>
-          <div class="tabs__fade tabs__fade--end"></div>
-          <button type="button" class="tabs__arrow tabs__arrow--end" id="tabs-more" aria-label="Scroll industries right">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
-          </button>
-        </div>
-      </div>
       <p class="sr-only" aria-live="polite" id="model-status"></p>
     </header>
 
-    <div class="world">
-      <!-- Chat -->
-      <div class="world__chat" id="chat-pane">
-        <div class="chat">
-          <div class="chat__head">
-            <p class="chat__title" id="chat-title">Ask the graph</p>
-            <button type="button" class="chat__fold" id="chat-fold" aria-controls="chat-pane" aria-expanded="true" aria-label="Fold the chat away">
-              <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+    <div class="world" data-chat="open">
+      <!-- One row of controls between the headline and the graph -->
+      <div class="world__bar">
+        <button type="button" class="world__btn world__reset" id="reset">Reset view</button>
+        <div class="model__tabs">
+          <!-- Industry tabs -->
+          <div class="tabs" id="tabs" data-back="false" data-more="true">
+            <div class="tabs__strip" id="tabs-strip" role="tablist" aria-label="Industries"></div>
+            <div class="tabs__fade tabs__fade--start"></div>
+            <button type="button" class="tabs__arrow tabs__arrow--start" id="tabs-back" aria-label="Scroll industries left">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+            </button>
+            <div class="tabs__fade tabs__fade--end"></div>
+            <button type="button" class="tabs__arrow tabs__arrow--end" id="tabs-more" aria-label="Scroll industries right">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
             </button>
           </div>
-          <div class="chat__log" id="chat-log" role="log" aria-live="off" aria-labelledby="chat-title"></div>
-          <p class="sr-only" aria-live="polite" id="chat-status"></p>
-          <form class="chat__form" id="chat-form" autocomplete="off">
-            <input class="chat__input" id="chat-input" type="text" placeholder="Ask about this world…" aria-label="Ask about this world" />
-            <button class="chat__send" type="submit" aria-label="Send">
-              <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
-            </button>
-          </form>
         </div>
-      </div>
-
-      <!-- Stands in for the chat while it is folded away -->
-      <button type="button" class="chat__launcher" id="chat-open" aria-controls="chat-pane" aria-expanded="true">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 3.5v-3.5H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"></path><path d="M7.5 10h9M7.5 13h6" stroke-linecap="round"></path></svg>
-        <span>Ask the graph</span>
-        <span class="chat__unread" id="chat-unread" hidden></span>
-        <span class="sr-only" id="chat-unread-sr"></span>
-      </button>
-
-      <!-- The uncovered part of the page: the graph is fitted to it, and the controls sit in its corners -->
-      <div class="world__frame" id="frame">
-        <button type="button" class="world__btn world__reset" id="reset">Reset view</button>
-
         <div class="world__zoom" role="group" aria-label="Zoom">
           <button type="button" class="world__zoom-btn" id="zoom-in" aria-label="Zoom in">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21 12C21 12.1989 20.921 12.3897 20.7803 12.5303C20.6397 12.671 20.4489 12.75 20.25 12.75H12.75V20.25C12.75 20.4489 12.671 20.6397 12.5303 20.7803C12.3897 20.921 12.1989 21 12 21C11.8011 21 11.6103 20.921 11.4697 20.7803C11.329 20.6397 11.25 20.4489 11.25 20.25V12.75H3.75C3.55109 12.75 3.36032 12.671 3.21967 12.5303C3.07902 12.3897 3 12.1989 3 12C3 11.8011 3.07902 11.6103 3.21967 11.4697C3.36032 11.329 3.55109 11.25 3.75 11.25H11.25V3.75C11.25 3.55109 11.329 3.36032 11.4697 3.21967C11.6103 3.07902 11.8011 3 12 3C12.1989 3 12.3897 3.07902 12.5303 3.21967C12.671 3.36032 12.75 3.55109 12.75 3.75V11.25H20.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12Z"></path></svg>
@@ -769,6 +837,39 @@ body { overflow: hidden; }
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21 12C21 12.1989 20.921 12.3897 20.7803 12.5303C20.6397 12.671 20.4489 12.75 20.25 12.75H3.75C3.55109 12.75 3.36032 12.671 3.21967 12.5303C3.07902 12.3897 3 12.1989 3 12C3 11.8011 3.07902 11.6103 3.21967 11.4697C3.36032 11.329 3.55109 11.25 3.75 11.25H20.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12Z"></path></svg>
           </button>
         </div>
+      </div>
+
+      <!-- The graph's stage. The graph is fitted to #fit; the chat and the hints float in its corners -->
+      <div class="world__frame">
+        <div class="world__fit" id="fit"></div>
+
+        <!-- Chat -->
+        <div class="world__chat" id="chat-pane">
+          <div class="chat">
+            <div class="chat__head">
+              <p class="chat__title" id="chat-title">Ask the graph</p>
+              <button type="button" class="chat__fold" id="chat-fold" aria-controls="chat-pane" aria-expanded="true" aria-label="Fold the chat away">
+                <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+              </button>
+            </div>
+            <div class="chat__log" id="chat-log" role="log" aria-live="off" aria-labelledby="chat-title"></div>
+            <p class="sr-only" aria-live="polite" id="chat-status"></p>
+            <form class="chat__form" id="chat-form" autocomplete="off">
+              <input class="chat__input" id="chat-input" type="text" placeholder="Ask about this world…" aria-label="Ask about this world" />
+              <button class="chat__send" type="submit" aria-label="Send">
+                <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true" focusable="false"><path d="M21.1378 16.5145L14.4719 23.7869C14.41 23.8544 14.3365 23.908 14.2555 23.9446C14.1746 23.9812 14.0879 24 14.0003 24C13.9127 24 13.826 23.9812 13.7451 23.9446C13.6641 23.908 13.5906 23.8544 13.5287 23.7869C13.4667 23.7193 13.4176 23.6391 13.3841 23.5508C13.3506 23.4625 13.3333 23.3679 13.3333 23.2724C13.3333 23.1768 13.3506 23.0822 13.3841 22.9939C13.4176 22.9056 13.4667 22.8254 13.5287 22.7578L19.7238 16L13.5287 9.24216C13.4036 9.1057 13.3333 8.92062 13.3333 8.72764C13.3333 8.53466 13.4036 8.34958 13.5287 8.21312C13.6538 8.07666 13.8234 8 14.0003 8C14.1772 8 14.3468 8.07666 14.4719 8.21312L21.1378 15.4855C21.1998 15.553 21.249 15.6332 21.2825 15.7215C21.3161 15.8098 21.3333 15.9044 21.3333 16C21.3333 16.0956 21.3161 16.1902 21.2825 16.2785C21.249 16.3668 21.1998 16.447 21.1378 16.5145Z"></path></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Stands in for the chat while it is folded away -->
+        <button type="button" class="chat__launcher" id="chat-open" aria-controls="chat-pane" aria-expanded="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4.5 3.5v-3.5H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"></path><path d="M7.5 10h9M7.5 13h6" stroke-linecap="round"></path></svg>
+          <span>Ask the graph</span>
+          <span class="chat__unread" id="chat-unread" hidden></span>
+          <span class="sr-only" id="chat-unread-sr"></span>
+        </button>
 
         <ul class="world__legend" id="model-legend" aria-label="How to move">
           <li class="world__hint">
@@ -2264,14 +2365,15 @@ syncArrows();
    ============================================================ */
 const stageEl  = document.getElementById('stage');
 const hosts    = [...document.querySelectorAll('.world__host')];
-const frameEl  = document.getElementById('frame');
+const frameEl  = document.getElementById('fit');      // what the graph is fitted to
 
-// keep the canvas mask in step with the headline block's real height
+// keep the canvas mask in step with where the graph's stage begins; the
+// stage's bottom is pinned, so any move of its top changes its height too
 const modelEl = document.querySelector('.model');
-const topEl   = document.querySelector('.model__top');
-const syncTopH = () => modelEl.style.setProperty('--top-h', `${Math.round(topEl.getBoundingClientRect().height)}px`);
+const stageBoxEl = document.querySelector('.world__frame');
+const syncTopH = () => modelEl.style.setProperty('--top-h', `${Math.round(stageBoxEl.getBoundingClientRect().top)}px`);
 syncTopH();
-new ResizeObserver(syncTopH).observe(topEl);
+new ResizeObserver(syncTopH).observe(stageBoxEl);
 const resetBtn = document.getElementById('reset');
 const zoomIn   = document.getElementById('zoom-in');
 const zoomOut  = document.getElementById('zoom-out');
